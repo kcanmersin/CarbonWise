@@ -1,3 +1,70 @@
-# Build folder and log file
-build/
-build.log
+# ## Visual Studio / IDE ##
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+.idea/ # Rider IDE için
+
+**/[Bb]in/
+**/[Oo]bj/
+**/[Dd]ebug/
+**/[Rr]elease/
+**/[Xx]64/
+**/[Xx]86/
+**/[Aa][Rr][Mm]64/
+**/artifacts/
+**/publish/
+*.pdb # Debug sembolleri
+*.dll # Derlenmiş kütüphaneler
+*.exe # Çalıştırılabilir dosyalar
+*.aps
+*.tmp
+*.bak
+**/packages/*
+!**/packages/build/
+!**/packages/repositories.config
+*.nupkg
+node_modules/
+npm-debug.log*
+yarn-error.log
+yarn.lock # Genellikle eklenir ama projenin politikasına bağlı
+package-lock.json # Genellikle eklenir ama projenin politikasına bağlı
+**/wwwroot/lib/ # Bower veya benzeri araçlarla yüklenen kütüphaneler (genellikle eklenmez)
+appsettings.Development.json # İçinde hassas bilgi yoksa eklenebilir, varsa eklenmemeli. Projeye göre karar verin.
+secrets.json
+*.secrets.json
+*.Publish.xml # Kullanıcıya özel yayınlama profilleri
+*.pubxml.user
+**/TestResults/
+*.trx
+*.coverage
+*.coverlet.json
+*.log
+logs/
+*.svclog
+_ReSharper*/
+*.resharper
+*.psess
+*.vsp
+*.vspx
+*.dacpac
+*.Cache
+*.orig
+*.pidb
+
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+.AppleDouble
+.LSOverride
+*~
+
+_UpgradeReport_Files/
+UpgradeLog*.htm
+ClientBin/
+
+*.mdf
+*.ldf
+*.sdf
