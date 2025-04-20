@@ -23,6 +23,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Application", "Application", "{05AE8947-8066-4EB5-8914-F0A2539B7DAF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CarbonWise.BuildingBlocks.Application", "src\BuildingBlocks\Application\CarbonWise.BuildingBlocks.Application\CarbonWise.BuildingBlocks.Application.csproj", "{CFEA52B6-31F4-4368-B720-9E286A681F7E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D9BC1DB9-E0CF-47A0-85A2-238D7938AB18} = {D9BC1DB9-E0CF-47A0-85A2-238D7938AB18}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Domain", "Domain", "{7E689C28-772B-4874-83B5-D5C254EE5E3E}"
 EndProject

@@ -1,8 +1,7 @@
-﻿using CarbonWise.BuildingBlocks.Application.Data;
+﻿using MySqlConnector;
+using CarbonWise.BuildingBlocks.Infrastructure.Data; 
 using Microsoft.Extensions.Configuration;
-using Npgsql;
-using System.Data;
-
+using System.Data; 
 namespace CarbonWise.BuildingBlocks.Infrastructure
 {
     public class SqlConnectionFactory : ISqlConnectionFactory, IDisposable
@@ -19,7 +18,7 @@ namespace CarbonWise.BuildingBlocks.Infrastructure
         {
             if (_connection == null || _connection.State != ConnectionState.Open)
             {
-                _connection = new NpgsqlConnection(_configuration.GetConnectionString("DefaultConnection"));
+                _connection = new MySqlConnection(_configuration.GetConnectionString("DefaultConnection"));
                 _connection.Open();
             }
 
