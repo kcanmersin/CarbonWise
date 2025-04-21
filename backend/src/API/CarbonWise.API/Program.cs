@@ -16,6 +16,8 @@ using CarbonWise.BuildingBlocks.Application.Users.Queries;
 using CarbonWise.BuildingBlocks.Infrastructure.Users;
 using CarbonWise.BuildingBlocks.Domain.SchoolInfos;
 using CarbonWise.BuildingBlocks.Infrastructure.SchoolInfos;
+using CarbonWise.BuildingBlocks.Domain.Buildings;
+using CarbonWise.BuildingBlocks.Infrastructure.Buildings;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -60,7 +62,7 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<ISchoolInfoRepository, SchoolInfoRepository>();
-
+builder.Services.AddScoped<IBuildingRepository, BuildingRepository>();
 // Register handlers
 builder.Services.AddScoped<RegisterUserCommandHandler>();
 builder.Services.AddScoped<LoginCommandHandler>();

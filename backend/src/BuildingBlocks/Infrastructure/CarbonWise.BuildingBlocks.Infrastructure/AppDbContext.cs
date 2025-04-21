@@ -1,4 +1,5 @@
-﻿using CarbonWise.BuildingBlocks.Domain.SchoolInfos;
+﻿using CarbonWise.BuildingBlocks.Domain.Buildings;
+using CarbonWise.BuildingBlocks.Domain.SchoolInfos;
 using CarbonWise.BuildingBlocks.Domain.Users;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -12,6 +13,9 @@ namespace CarbonWise.BuildingBlocks.Infrastructure
         //school info
         public DbSet<SchoolInfo> SchoolInfos { get; set; }
         public DbSet<CampusVehicleEntry> CampusVehicleEntries { get; set; }
+
+        //building
+        public DbSet<Building> Buildings { get; set; }
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
