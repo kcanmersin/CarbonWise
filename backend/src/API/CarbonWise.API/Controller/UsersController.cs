@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
-using CarbonWise.BuildingBlocks.Application.Users.GetUser;
+using CarbonWise.BuildingBlocks.Application.Users.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

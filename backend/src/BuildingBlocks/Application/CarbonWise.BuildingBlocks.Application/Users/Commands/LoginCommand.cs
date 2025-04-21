@@ -1,4 +1,4 @@
-﻿namespace CarbonWise.BuildingBlocks.Application.Users.Login
+﻿namespace CarbonWise.BuildingBlocks.Application.Users.Commands
 {
     public class LoginCommand
     {

@@ -1,6 +1,6 @@
 ﻿using CarbonWise.BuildingBlocks.Domain.Users;
 
-namespace CarbonWise.BuildingBlocks.Application.Security
+namespace CarbonWise.BuildingBlocks.Infrastructure.Security
 {
     public interface IJwtTokenGenerator
     {

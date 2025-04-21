@@ -1,6 +1,6 @@
 ﻿using CarbonWise.BuildingBlocks.Domain.Users;
 
-namespace CarbonWise.BuildingBlocks.Application.Users.RegisterUser
+namespace CarbonWise.BuildingBlocks.Application.Users.Commands
 {
     public class RegisterUserCommand
     {

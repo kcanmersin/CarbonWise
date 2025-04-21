@@ -1,4 +1,4 @@
-﻿namespace CarbonWise.BuildingBlocks.Application.Security
+﻿namespace CarbonWise.BuildingBlocks.Infrastructure.Security
 {
     public interface IPasswordHasher
     {

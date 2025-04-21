@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Security.Cryptography;
-using CarbonWise.BuildingBlocks.Application.Security;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 
 namespace CarbonWise.BuildingBlocks.Infrastructure.Security

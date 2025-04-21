@@ -2,10 +2,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using CarbonWise.BuildingBlocks.Application.Security;
-using CarbonWise.BuildingBlocks.Domain.Users;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+//import building block domain users user
+using CarbonWise.BuildingBlocks.Domain.Users;
 
 namespace CarbonWise.BuildingBlocks.Infrastructure.Security
 {

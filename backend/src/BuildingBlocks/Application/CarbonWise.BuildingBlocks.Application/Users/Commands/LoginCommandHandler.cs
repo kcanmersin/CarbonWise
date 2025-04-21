@@ -1,8 +1,9 @@
 ﻿using CarbonWise.BuildingBlocks.Domain.Users;
 using CarbonWise.BuildingBlocks.Infrastructure;
-using CarbonWise.BuildingBlocks.Application.Security; 
+using CarbonWise.BuildingBlocks.Application.Users.Login;
+using CarbonWise.BuildingBlocks.Infrastructure.Security;
 
-namespace CarbonWise.BuildingBlocks.Application.Users.Login
+namespace CarbonWise.BuildingBlocks.Application.Users.Commands
 {
     public class LoginCommandHandler
     {

@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using CarbonWise.BuildingBlocks.Domain.Users;
 
-namespace CarbonWise.BuildingBlocks.Application.Users.GetUser
+namespace CarbonWise.BuildingBlocks.Application.Users.Queries
 {
     public class GetUserQueryHandler
     {

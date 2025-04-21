@@ -1,8 +1,8 @@
 ﻿using CarbonWise.BuildingBlocks.Domain.Users;
-using CarbonWise.BuildingBlocks.Application.Security; 
 using CarbonWise.BuildingBlocks.Infrastructure;
+using CarbonWise.BuildingBlocks.Infrastructure.Security;
 
-namespace CarbonWise.BuildingBlocks.Application.Users.RegisterUser
+namespace CarbonWise.BuildingBlocks.Application.Users.Commands
 {
     public class RegisterUserCommandHandler
     {

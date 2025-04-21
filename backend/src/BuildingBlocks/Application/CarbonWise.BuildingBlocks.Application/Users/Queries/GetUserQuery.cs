@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CarbonWise.BuildingBlocks.Application.Users.GetUser
+namespace CarbonWise.BuildingBlocks.Application.Users.Queries
 {
     public class GetUserQuery
     {

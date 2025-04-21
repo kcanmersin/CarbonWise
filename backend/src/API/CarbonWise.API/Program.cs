@@ -1,13 +1,8 @@
 using System.Text;
 using CarbonWise.API.Configuration.Extensions;
-using CarbonWise.BuildingBlocks.Application.Security;
-using CarbonWise.BuildingBlocks.Application.Users.GetUser;
-using CarbonWise.BuildingBlocks.Application.Users.Login;
-using CarbonWise.BuildingBlocks.Application.Users.RegisterUser;
 using CarbonWise.BuildingBlocks.Domain.Users;
 using CarbonWise.BuildingBlocks.Infrastructure;
 using CarbonWise.BuildingBlocks.Infrastructure.Security;
-using CarbonWise.BuildingBlocks.Infrastructure.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,6 +11,11 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using CarbonWise.BuildingBlocks.Application.Users.Commands;
+using CarbonWise.BuildingBlocks.Application.Users.Queries;
+using CarbonWise.BuildingBlocks.Infrastructure.Users;
+using CarbonWise.BuildingBlocks.Domain.SchoolInfos;
+using CarbonWise.BuildingBlocks.Infrastructure.SchoolInfos;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -54,10 +54,12 @@ builder.Services.AddAuthentication(options =>
 });
 
 // Register services
+// Register repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+builder.Services.AddScoped<ISchoolInfoRepository, SchoolInfoRepository>();
 
 // Register handlers
 builder.Services.AddScoped<RegisterUserCommandHandler>();
