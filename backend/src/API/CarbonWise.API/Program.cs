@@ -26,6 +26,7 @@ using CarbonWise.BuildingBlocks.Domain.Papers;
 using CarbonWise.BuildingBlocks.Infrastructure.Papers;
 using CarbonWise.BuildingBlocks.Domain.Waters;
 using CarbonWise.BuildingBlocks.Infrastructure.Waters;
+using CarbonWise.BuildingBlocks.Application.Services.CarbonFootprints;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -72,6 +73,7 @@ builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<ISchoolInfoRepository, SchoolInfoRepository>();
 builder.Services.AddScoped<IBuildingRepository, BuildingRepository>();
 builder.Services.AddScoped<IElectricRepository, ElectricRepository>();
+builder.Services.AddScoped<ICarbonFootprintService, CarbonFootprintService>();
 // Register handlers
 builder.Services.AddScoped<INaturalGasRepository, NaturalGasRepository>();
 builder.Services.AddScoped<IPaperRepository,PaperRepository>();

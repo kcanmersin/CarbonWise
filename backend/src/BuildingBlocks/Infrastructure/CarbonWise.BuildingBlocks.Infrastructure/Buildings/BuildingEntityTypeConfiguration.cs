@@ -21,11 +21,15 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Buildings
                 .IsRequired()
                 .HasMaxLength(100);
 
+
             builder.Property(b => b.E_MeterCode)
+                .IsRequired(false)
                 .HasMaxLength(20);
 
             builder.Property(b => b.G_MeterCode)
+                .IsRequired(false)
                 .HasMaxLength(20);
+
 
             builder.HasIndex(b => b.Name)
                 .IsUnique();
