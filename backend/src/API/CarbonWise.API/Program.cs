@@ -20,6 +20,12 @@ using CarbonWise.BuildingBlocks.Domain.Buildings;
 using CarbonWise.BuildingBlocks.Infrastructure.Buildings;
 using CarbonWise.BuildingBlocks.Domain.Electrics;
 using CarbonWise.BuildingBlocks.Infrastructure.Electrics;
+using CarbonWise.BuildingBlocks.Infrastructure.NaturalGases;
+using CarbonWise.BuildingBlocks.Domain.NaturalGases;
+using CarbonWise.BuildingBlocks.Domain.Papers;
+using CarbonWise.BuildingBlocks.Infrastructure.Papers;
+using CarbonWise.BuildingBlocks.Domain.Waters;
+using CarbonWise.BuildingBlocks.Infrastructure.Waters;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -67,10 +73,19 @@ builder.Services.AddScoped<ISchoolInfoRepository, SchoolInfoRepository>();
 builder.Services.AddScoped<IBuildingRepository, BuildingRepository>();
 builder.Services.AddScoped<IElectricRepository, ElectricRepository>();
 // Register handlers
+builder.Services.AddScoped<INaturalGasRepository, NaturalGasRepository>();
+builder.Services.AddScoped<IPaperRepository,PaperRepository>();
+builder.Services.AddScoped<IWaterRepository, WaterRepository>();
 builder.Services.AddScoped<RegisterUserCommandHandler>();
 builder.Services.AddScoped<LoginCommandHandler>();
 builder.Services.AddScoped<GetUserQueryHandler>();
+builder.Services.AddMediatR(cfg => {
+    cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.Electrics.ElectricDto).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.NaturalGases.NaturalGasDto).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.Papers.PaperDto).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.Waters.WaterDto).Assembly);
 
+});
 // Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 

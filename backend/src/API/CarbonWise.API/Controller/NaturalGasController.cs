@@ -1,23 +1,21 @@
-﻿using System;
+﻿// src/API/CarbonWise.API/Controllers/NaturalGasController.cs
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using CarbonWise.BuildingBlocks.Application.Features.Electrics;
-using CarbonWise.BuildingBlocks.Application.Features.Electrics.Commands.CreateElectric;
-using CarbonWise.BuildingBlocks.Application.Features.Electrics.Commands.DeleteElectric;
-using CarbonWise.BuildingBlocks.Application.Features.Electrics.Commands.UpdateElectric;
-using CarbonWise.BuildingBlocks.Application.Features.Electrics.Queries;
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using CarbonWise.BuildingBlocks.Application.Features.NaturalGases.Commands;
+using CarbonWise.BuildingBlocks.Application.Features.NaturalGases.Queries;
+using MediatR;
 
 namespace CarbonWise.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ElectricsController : ControllerBase
+    public class NaturalGasController : ControllerBase
     {
         private readonly IMediator _mediator;
 
-        public ElectricsController(IMediator mediator)
+        public NaturalGasController(IMediator mediator)
         {
             _mediator = mediator;
         }
@@ -25,7 +23,7 @@ namespace CarbonWise.API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(Guid id)
         {
-            var query = new GetElectricByIdQuery { Id = id };
+            var query = new GetNaturalGasByIdQuery { Id = id };
             var result = await _mediator.Send(query);
 
             if (result == null)
@@ -41,7 +39,7 @@ namespace CarbonWise.API.Controllers
         {
             try
             {
-                var query = new GetElectricsByBuildingQuery { BuildingId = buildingId };
+                var query = new GetNaturalGasByBuildingQuery { BuildingId = buildingId };
                 var result = await _mediator.Send(query);
                 return Ok(result);
             }
@@ -52,11 +50,11 @@ namespace CarbonWise.API.Controllers
         }
 
         [HttpGet("filter")]
-        public async Task<IActionResult> Filter([FromQuery] ElectricFilterRequest filter)
+        public async Task<IActionResult> Filter([FromQuery] NaturalGasFilterRequest filter)
         {
             try
             {
-                var query = new FilterElectricsQuery
+                var query = new FilterNaturalGasQuery
                 {
                     BuildingId = filter.BuildingId,
                     StartDate = filter.StartDate,
@@ -73,16 +71,16 @@ namespace CarbonWise.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateElectricRequest request)
+        public async Task<IActionResult> Create([FromBody] CreateNaturalGasRequest request)
         {
             try
             {
-                var command = new CreateElectricCommand
+                var command = new CreateNaturalGasCommand
                 {
                     Date = request.Date,
                     InitialMeterValue = request.InitialMeterValue,
                     FinalMeterValue = request.FinalMeterValue,
-                    KWHValue = request.KWHValue,
+                    SM3Value = request.SM3Value,
                     BuildingId = request.BuildingId
                 };
 
@@ -100,17 +98,17 @@ namespace CarbonWise.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateElectricRequest request)
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateNaturalGasRequest request)
         {
             try
             {
-                var command = new UpdateElectricCommand
+                var command = new UpdateNaturalGasCommand
                 {
                     Id = id,
                     Date = request.Date,
                     InitialMeterValue = request.InitialMeterValue,
                     FinalMeterValue = request.FinalMeterValue,
-                    KWHValue = request.KWHValue
+                    SM3Value = request.SM3Value
                 };
 
                 var result = await _mediator.Send(command);
@@ -133,7 +131,7 @@ namespace CarbonWise.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var command = new DeleteElectricCommand { Id = id };
+            var command = new DeleteNaturalGasCommand { Id = id };
             var result = await _mediator.Send(command);
 
             if (!result)
@@ -145,14 +143,14 @@ namespace CarbonWise.API.Controllers
         }
     }
 
-    public class ElectricFilterRequest
+    public class NaturalGasFilterRequest
     {
         public Guid? BuildingId { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
     }
 
-    public class CreateElectricRequest
+    public class CreateNaturalGasRequest
     {
         [Required]
         public DateTime Date { get; set; }
@@ -164,13 +162,13 @@ namespace CarbonWise.API.Controllers
         public decimal FinalMeterValue { get; set; }
 
         [Required]
-        public decimal KWHValue { get; set; }
+        public decimal SM3Value { get; set; }
 
         [Required]
         public Guid BuildingId { get; set; }
     }
 
-    public class UpdateElectricRequest
+    public class UpdateNaturalGasRequest
     {
         [Required]
         public DateTime Date { get; set; }
@@ -182,6 +180,6 @@ namespace CarbonWise.API.Controllers
         public decimal FinalMeterValue { get; set; }
 
         [Required]
-        public decimal KWHValue { get; set; }
+        public decimal SM3Value { get; set; }
     }
 }

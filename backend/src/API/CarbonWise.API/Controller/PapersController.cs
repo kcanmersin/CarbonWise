@@ -1,11 +1,14 @@
-﻿using System;
+﻿// src/API/CarbonWise.API/Controllers/PapersController.cs
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using CarbonWise.BuildingBlocks.Application.Features.Electrics;
-using CarbonWise.BuildingBlocks.Application.Features.Electrics.Commands.CreateElectric;
-using CarbonWise.BuildingBlocks.Application.Features.Electrics.Commands.DeleteElectric;
-using CarbonWise.BuildingBlocks.Application.Features.Electrics.Commands.UpdateElectric;
-using CarbonWise.BuildingBlocks.Application.Features.Electrics.Queries;
+using CarbonWise.BuildingBlocks.Application.Features.Papers;
+using CarbonWise.BuildingBlocks.Application.Features.Papers.Commands.CreatePaper;
+using CarbonWise.BuildingBlocks.Application.Features.Papers.Commands.DeletePaper;
+using CarbonWise.BuildingBlocks.Application.Features.Papers.Commands.UpdatePaper;
+using CarbonWise.BuildingBlocks.Application.Features.Papers.Queries.FilterPapers;
+using CarbonWise.BuildingBlocks.Application.Features.Papers.Queries.GetAllPapers;
+using CarbonWise.BuildingBlocks.Application.Features.Papers.Queries.GetPaperById;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,19 +16,27 @@ namespace CarbonWise.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ElectricsController : ControllerBase
+    public class PapersController : ControllerBase
     {
         private readonly IMediator _mediator;
 
-        public ElectricsController(IMediator mediator)
+        public PapersController(IMediator mediator)
         {
             _mediator = mediator;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var query = new GetAllPapersQuery();
+            var result = await _mediator.Send(query);
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(Guid id)
         {
-            var query = new GetElectricByIdQuery { Id = id };
+            var query = new GetPaperByIdQuery { Id = id };
             var result = await _mediator.Send(query);
 
             if (result == null)
@@ -36,29 +47,13 @@ namespace CarbonWise.API.Controllers
             return Ok(result);
         }
 
-        [HttpGet("building/{buildingId}")]
-        public async Task<IActionResult> GetByBuilding(Guid buildingId)
-        {
-            try
-            {
-                var query = new GetElectricsByBuildingQuery { BuildingId = buildingId };
-                var result = await _mediator.Send(query);
-                return Ok(result);
-            }
-            catch (ApplicationException ex)
-            {
-                return NotFound(ex.Message);
-            }
-        }
-
         [HttpGet("filter")]
-        public async Task<IActionResult> Filter([FromQuery] ElectricFilterRequest filter)
+        public async Task<IActionResult> Filter([FromQuery] PaperFilterRequest filter)
         {
             try
             {
-                var query = new FilterElectricsQuery
+                var query = new FilterPapersQuery
                 {
-                    BuildingId = filter.BuildingId,
                     StartDate = filter.StartDate,
                     EndDate = filter.EndDate
                 };
@@ -73,25 +68,18 @@ namespace CarbonWise.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateElectricRequest request)
+        public async Task<IActionResult> Create([FromBody] CreatePaperRequest request)
         {
             try
             {
-                var command = new CreateElectricCommand
+                var command = new CreatePaperCommand
                 {
                     Date = request.Date,
-                    InitialMeterValue = request.InitialMeterValue,
-                    FinalMeterValue = request.FinalMeterValue,
-                    KWHValue = request.KWHValue,
-                    BuildingId = request.BuildingId
+                    Usage = request.Usage
                 };
 
                 var result = await _mediator.Send(command);
                 return CreatedAtAction(nameof(Get), new { id = result.Id }, result);
-            }
-            catch (ApplicationException ex)
-            {
-                return NotFound(ex.Message);
             }
             catch (ArgumentException ex)
             {
@@ -100,17 +88,15 @@ namespace CarbonWise.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateElectricRequest request)
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePaperRequest request)
         {
             try
             {
-                var command = new UpdateElectricCommand
+                var command = new UpdatePaperCommand
                 {
                     Id = id,
                     Date = request.Date,
-                    InitialMeterValue = request.InitialMeterValue,
-                    FinalMeterValue = request.FinalMeterValue,
-                    KWHValue = request.KWHValue
+                    Usage = request.Usage
                 };
 
                 var result = await _mediator.Send(command);
@@ -133,7 +119,7 @@ namespace CarbonWise.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var command = new DeleteElectricCommand { Id = id };
+            var command = new DeletePaperCommand { Id = id };
             var result = await _mediator.Send(command);
 
             if (!result)
@@ -145,43 +131,27 @@ namespace CarbonWise.API.Controllers
         }
     }
 
-    public class ElectricFilterRequest
+    public class PaperFilterRequest
     {
-        public Guid? BuildingId { get; set; }
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
     }
 
-    public class CreateElectricRequest
+    public class CreatePaperRequest
     {
         [Required]
         public DateTime Date { get; set; }
 
         [Required]
-        public decimal InitialMeterValue { get; set; }
-
-        [Required]
-        public decimal FinalMeterValue { get; set; }
-
-        [Required]
-        public decimal KWHValue { get; set; }
-
-        [Required]
-        public Guid BuildingId { get; set; }
+        public decimal Usage { get; set; }
     }
 
-    public class UpdateElectricRequest
+    public class UpdatePaperRequest
     {
         [Required]
         public DateTime Date { get; set; }
 
         [Required]
-        public decimal InitialMeterValue { get; set; }
-
-        [Required]
-        public decimal FinalMeterValue { get; set; }
-
-        [Required]
-        public decimal KWHValue { get; set; }
+        public decimal Usage { get; set; }
     }
 }

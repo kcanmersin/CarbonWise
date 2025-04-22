@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250421191529_buildings")]
-    partial class buildings
+    [Migration("20250422090544_x")]
+    partial class x
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -51,6 +51,78 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Buildings", (string)null);
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Electrics.Electric", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("BuildingId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("FinalMeterValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("InitialMeterValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("KWHValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Usage")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BuildingId");
+
+                    b.HasIndex("Date");
+
+                    b.ToTable("Electrics", (string)null);
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.NaturalGases.NaturalGas", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("BuildingId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("FinalMeterValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("InitialMeterValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("SM3Value")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Usage")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BuildingId");
+
+                    b.HasIndex("Date");
+
+                    b.ToTable("NaturalGas", (string)null);
                 });
 
             modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.SchoolInfos.CampusVehicleEntry", b =>
@@ -134,6 +206,28 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Electrics.Electric", b =>
+                {
+                    b.HasOne("CarbonWise.BuildingBlocks.Domain.Buildings.Building", "Building")
+                        .WithMany()
+                        .HasForeignKey("BuildingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Building");
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.NaturalGases.NaturalGas", b =>
+                {
+                    b.HasOne("CarbonWise.BuildingBlocks.Domain.Buildings.Building", "Building")
+                        .WithMany()
+                        .HasForeignKey("BuildingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Building");
                 });
 
             modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.SchoolInfos.SchoolInfo", b =>

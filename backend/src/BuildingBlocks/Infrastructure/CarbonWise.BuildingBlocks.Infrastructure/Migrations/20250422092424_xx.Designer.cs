@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250421192313_electrics")]
-    partial class electrics
+    [Migration("20250422092424_xx")]
+    partial class xx
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -87,6 +87,66 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                     b.HasIndex("Date");
 
                     b.ToTable("Electrics", (string)null);
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.NaturalGases.NaturalGas", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("BuildingId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("FinalMeterValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("InitialMeterValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("SM3Value")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Usage")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BuildingId");
+
+                    b.HasIndex("Date");
+
+                    b.ToTable("NaturalGas", (string)null);
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Papers.Paper", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("BuildingId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("Usage")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BuildingId");
+
+                    b.HasIndex("Date");
+
+                    b.ToTable("Papers", (string)null);
                 });
 
             modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.SchoolInfos.CampusVehicleEntry", b =>
@@ -172,7 +232,61 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Waters.Water", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("BuildingId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("FinalMeterValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("InitialMeterValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Usage")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BuildingId");
+
+                    b.HasIndex("Date");
+
+                    b.ToTable("Waters", (string)null);
+                });
+
             modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Electrics.Electric", b =>
+                {
+                    b.HasOne("CarbonWise.BuildingBlocks.Domain.Buildings.Building", "Building")
+                        .WithMany()
+                        .HasForeignKey("BuildingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Building");
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.NaturalGases.NaturalGas", b =>
+                {
+                    b.HasOne("CarbonWise.BuildingBlocks.Domain.Buildings.Building", "Building")
+                        .WithMany()
+                        .HasForeignKey("BuildingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Building");
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Papers.Paper", b =>
                 {
                     b.HasOne("CarbonWise.BuildingBlocks.Domain.Buildings.Building", "Building")
                         .WithMany()
@@ -192,6 +306,17 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Vehicles");
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Waters.Water", b =>
+                {
+                    b.HasOne("CarbonWise.BuildingBlocks.Domain.Buildings.Building", "Building")
+                        .WithMany()
+                        .HasForeignKey("BuildingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Building");
                 });
 #pragma warning restore 612, 618
         }
