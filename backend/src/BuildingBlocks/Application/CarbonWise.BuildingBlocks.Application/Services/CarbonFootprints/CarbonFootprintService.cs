@@ -22,7 +22,12 @@ namespace CarbonWise.BuildingBlocks.Application.Services.CarbonFootprints
             _schoolInfoRepository = schoolInfoRepository;
         }
 
-        public async Task<CarbonFootprint> CalculateForYearAsync(int year)
+        public async Task<CarbonFootprint> CalculateForYearAsync(
+            int year,
+            decimal? electricityFactor = null,
+            decimal? shuttleBusFactor = null,
+            decimal? carFactor = null,
+            decimal? motorcycleFactor = null)
         {
             var startDate = new DateTime(year, 1, 1);
             var endDate = new DateTime(year, 12, 31);
@@ -57,10 +62,20 @@ namespace CarbonWise.BuildingBlocks.Application.Services.CarbonFootprints
                 carsEnteringCount,
                 carTravelDistancePerDay,
                 motorcyclesEnteringCount,
-                motorcycleTravelDistancePerDay);
+                motorcycleTravelDistancePerDay,
+                electricityFactor ?? 0.84m,
+                shuttleBusFactor ?? 0.01m,
+                carFactor ?? 0.02m,
+                motorcycleFactor ?? 0.01m);
         }
 
-        public async Task<List<CarbonFootprint>> CalculateForPeriodAsync(DateTime startDate, DateTime endDate)
+        public async Task<List<CarbonFootprint>> CalculateForPeriodAsync(
+            DateTime startDate,
+            DateTime endDate,
+            decimal? electricityFactor = null,
+            decimal? shuttleBusFactor = null,
+            decimal? carFactor = null,
+            decimal? motorcycleFactor = null)
         {
             var startYear = startDate.Year;
             var endYear = endDate.Year;
@@ -71,7 +86,12 @@ namespace CarbonWise.BuildingBlocks.Application.Services.CarbonFootprints
             {
                 try
                 {
-                    var carbonFootprint = await CalculateForYearAsync(year);
+                    var carbonFootprint = await CalculateForYearAsync(
+                        year,
+                        electricityFactor,
+                        shuttleBusFactor,
+                        carFactor,
+                        motorcycleFactor);
                     results.Add(carbonFootprint);
                 }
                 catch (ApplicationException)

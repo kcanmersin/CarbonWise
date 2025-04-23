@@ -22,18 +22,22 @@ namespace CarbonWise.BuildingBlocks.Domain.CarbonFootprints
             int carsEnteringCount,
             decimal carTravelDistancePerDay,
             int motorcyclesEnteringCount,
-            decimal motorcycleTravelDistancePerDay)
+            decimal motorcycleTravelDistancePerDay,
+            decimal electricityFactor = 0.84m,
+            decimal shuttleBusFactor = 0.01m,
+            decimal carFactor = 0.02m,
+            decimal motorcycleFactor = 0.01m)
         {
             Year = year;
 
-            ElectricityEmission = (electricityUsage / 1000) * 0.84m;
+            ElectricityEmission = (electricityUsage / 1000) * electricityFactor;
 
             const int workDaysPerYear = 261;
-            ShuttleBusEmission = (shuttleBusCount * shuttleBusTripsPerDay * shuttleBusTravelDistancePerDay * workDaysPerYear / 100) * 0.01m;
+            ShuttleBusEmission = (shuttleBusCount * shuttleBusTripsPerDay * shuttleBusTravelDistancePerDay * workDaysPerYear / 100) * shuttleBusFactor;
 
-            CarEmission = (carsEnteringCount * 2 * carTravelDistancePerDay * workDaysPerYear / 100) * 0.02m;
+            CarEmission = (carsEnteringCount * 2 * carTravelDistancePerDay * workDaysPerYear / 100) * carFactor;
 
-            MotorcycleEmission = (motorcyclesEnteringCount * 2 * motorcycleTravelDistancePerDay * workDaysPerYear / 100) * 0.01m;
+            MotorcycleEmission = (motorcyclesEnteringCount * 2 * motorcycleTravelDistancePerDay * workDaysPerYear / 100) * motorcycleFactor;
 
             TotalEmission = ElectricityEmission + ShuttleBusEmission + CarEmission + MotorcycleEmission;
         }

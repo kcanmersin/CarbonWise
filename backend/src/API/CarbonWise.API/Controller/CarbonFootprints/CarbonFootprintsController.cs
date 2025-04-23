@@ -20,11 +20,16 @@ namespace CarbonWise.API.Controllers
         }
 
         [HttpGet("year/{year}")]
-        public async Task<IActionResult> GetByYear(int year)
+        public async Task<IActionResult> GetByYear([FromQuery] YearCarbonFootprintRequest request)
         {
             try
             {
-                var carbonFootprint = await _carbonFootprintService.CalculateForYearAsync(year);
+                var carbonFootprint = await _carbonFootprintService.CalculateForYearAsync(
+                    request.Year,
+                    request.ElectricityFactor,
+                    request.ShuttleBusFactor,
+                    request.CarFactor,
+                    request.MotorcycleFactor);
 
                 var result = new CarbonFootprintDto
                 {
@@ -54,7 +59,13 @@ namespace CarbonWise.API.Controllers
 
             try
             {
-                var carbonFootprints = await _carbonFootprintService.CalculateForPeriodAsync(request.StartDate, request.EndDate);
+                var carbonFootprints = await _carbonFootprintService.CalculateForPeriodAsync(
+                    request.StartDate,
+                    request.EndDate,
+                    request.ElectricityFactor,
+                    request.ShuttleBusFactor,
+                    request.CarFactor,
+                    request.MotorcycleFactor);
 
                 var results = carbonFootprints.Select(cf => new CarbonFootprintDto
                 {
