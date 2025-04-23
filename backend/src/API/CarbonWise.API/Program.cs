@@ -81,6 +81,10 @@ builder.Services.AddScoped<IWaterRepository, WaterRepository>();
 builder.Services.AddScoped<RegisterUserCommandHandler>();
 builder.Services.AddScoped<LoginCommandHandler>();
 builder.Services.AddScoped<GetUserQueryHandler>();
+
+
+builder.Services.AddScoped<CarbonWise.BuildingBlocks.Application.Services.Consumption.IConsumptionDataService,
+                          CarbonWise.BuildingBlocks.Infrastructure.Services.Consumption.ConsumptionDataService>();
 builder.Services.AddMediatR(cfg => {
     cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.Electrics.ElectricDto).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.NaturalGases.NaturalGasDto).Assembly);
