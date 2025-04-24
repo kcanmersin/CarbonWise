@@ -27,6 +27,7 @@ using CarbonWise.BuildingBlocks.Infrastructure.Papers;
 using CarbonWise.BuildingBlocks.Domain.Waters;
 using CarbonWise.BuildingBlocks.Infrastructure.Waters;
 using CarbonWise.BuildingBlocks.Application.Services.CarbonFootprints;
+using CarbonWise.BuildingBlocks.Application.Services.LLMService;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -82,6 +83,9 @@ builder.Services.AddScoped<RegisterUserCommandHandler>();
 builder.Services.AddScoped<LoginCommandHandler>();
 builder.Services.AddScoped<GetUserQueryHandler>();
 
+builder.Services.Configure<LlmSettings>(builder.Configuration.GetSection("LlmSettings"));
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<ILlmService, LlmService>();
 
 builder.Services.AddScoped<CarbonWise.BuildingBlocks.Application.Services.Consumption.IConsumptionDataService,
                           CarbonWise.BuildingBlocks.Infrastructure.Services.Consumption.ConsumptionDataService>();

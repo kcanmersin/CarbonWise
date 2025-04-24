@@ -127,7 +127,25 @@ namespace CarbonWise.API.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+        [HttpGet("monthly-totals")]
+        public async Task<IActionResult> GetMonthlyTotals([FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
+        {
+            try
+            {
+                var query = new GetNaturalGasMonthlyTotalsQuery
+                {
+                    StartDate = startDate,
+                    EndDate = endDate
+                };
 
+                var result = await _mediator.Send(query);
+                return Ok(result);
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {

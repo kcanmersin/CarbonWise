@@ -14,5 +14,7 @@ namespace CarbonWise.BuildingBlocks.Domain.Electrics
         Task AddAsync(Electric electric);
         Task UpdateAsync(Electric electric);
         Task DeleteAsync(ElectricId id);
+        Task<List<ElectricMonthlyTotalDto>> GetMonthlyTotalsAsync(DateTime? startDate = null, DateTime? endDate = null);
+        Task<List<ElectricMonthlyAggregateDto>> GetMonthlyAggregateAsync(DateTime? startDate = null, DateTime? endDate = null);
     }
 }

@@ -22,6 +22,46 @@ namespace CarbonWise.API.Controllers
             _mediator = mediator;
         }
 
+        [HttpGet("monthly-aggregate")]
+        public async Task<IActionResult> GetMonthlyAggregate([FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
+        {
+            try
+            {
+                var query = new GetElectricMonthlyAggregateQuery
+                {
+                    StartDate = startDate,
+                    EndDate = endDate
+                };
+
+                var result = await _mediator.Send(query);
+                return Ok(result);
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpGet("monthly-totals")]
+        public async Task<IActionResult> GetMonthlyTotals([FromQuery] DateTime? startDate = null, [FromQuery] DateTime? endDate = null)
+        {
+            try
+            {
+                var query = new GetElectricMonthlyTotalsQuery
+                {
+                    StartDate = startDate,
+                    EndDate = endDate
+                };
+
+                var result = await _mediator.Send(query);
+                return Ok(result);
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(Guid id)
         {

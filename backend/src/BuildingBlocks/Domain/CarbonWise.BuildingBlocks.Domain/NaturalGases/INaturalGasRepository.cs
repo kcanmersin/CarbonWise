@@ -1,4 +1,5 @@
-﻿using CarbonWise.BuildingBlocks.Domain.Buildings;
+﻿using CarbonWise.BuildingBlocks.Application.Features.NaturalGases;
+using CarbonWise.BuildingBlocks.Domain.Buildings;
 
 namespace CarbonWise.BuildingBlocks.Domain.NaturalGases
 {
@@ -11,5 +12,7 @@ namespace CarbonWise.BuildingBlocks.Domain.NaturalGases
         Task AddAsync(NaturalGas naturalGas);
         Task UpdateAsync(NaturalGas naturalGas);
         Task DeleteAsync(NaturalGasId id);
+        Task<List<NaturalGasMonthlyTotalDto>> GetMonthlyTotalsAsync(DateTime? startDate = null, DateTime? endDate = null);
+        Task<List<NaturalGasMonthlyAggregateDto>> GetMonthlyAggregateAsync(DateTime? startDate = null, DateTime? endDate = null);
     }
 }
