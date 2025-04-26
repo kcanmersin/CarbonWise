@@ -28,6 +28,9 @@ using CarbonWise.BuildingBlocks.Domain.Waters;
 using CarbonWise.BuildingBlocks.Infrastructure.Waters;
 using CarbonWise.BuildingBlocks.Application.Services.CarbonFootprints;
 using CarbonWise.BuildingBlocks.Application.Services.LLMService;
+using CarbonWise.BuildingBlocks.Application.Services.CarbonFootPrintTest;
+using CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest;
+using CarbonWise.BuildingBlocks.Infrastructure.CarbonFootPrintTest;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -86,6 +89,10 @@ builder.Services.AddScoped<GetUserQueryHandler>();
 builder.Services.Configure<LlmSettings>(builder.Configuration.GetSection("LlmSettings"));
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<ILlmService, LlmService>();
+
+builder.Services.AddScoped<ICarbonFootprintTestRepository, CarbonFootprintTestRepository>();
+builder.Services.AddScoped<ITestQuestionRepository, TestQuestionRepository>();
+builder.Services.AddScoped<ICarbonFootprintTestService, CarbonFootprintTestService>();
 
 builder.Services.AddScoped<CarbonWise.BuildingBlocks.Application.Services.Consumption.IConsumptionDataService,
                           CarbonWise.BuildingBlocks.Infrastructure.Services.Consumption.ConsumptionDataService>();

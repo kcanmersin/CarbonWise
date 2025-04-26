@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using CarbonWise.BuildingBlocks.Domain.Papers;
 using CarbonWise.BuildingBlocks.Domain.Waters;
+using CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest;
 namespace CarbonWise.BuildingBlocks.Infrastructure
 {
     public class AppDbContext : DbContext
@@ -23,6 +24,11 @@ namespace CarbonWise.BuildingBlocks.Infrastructure
         public DbSet<Paper> Papers { get; set; }
         public DbSet<NaturalGas> NaturalGases { get; set; }
         public DbSet<Water> Waters { get; set; }
+
+        public DbSet<CarbonFootprintTest> CarbonFootprintTests { get; set; }
+        public DbSet<TestQuestion> TestQuestions { get; set; }
+        public DbSet<TestQuestionOption> TestQuestionOptions { get; set; }
+        public DbSet<TestResponse> TestResponses { get; set; }
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }

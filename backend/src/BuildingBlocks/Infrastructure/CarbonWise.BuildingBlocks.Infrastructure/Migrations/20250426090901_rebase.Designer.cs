@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250422210544_make_meter_code_nullable")]
-    partial class make_meter_code_nullable
+    [Migration("20250426090901_rebase")]
+    partial class rebase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -49,6 +49,107 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("Buildings", (string)null);
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.CarbonFootprintTest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("CategoryResults")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CompletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("TotalFootprint")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("CarbonFootprintTests", (string)null);
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.TestQuestion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TestQuestions", (string)null);
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.TestQuestionOption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("FootprintFactor")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(600)
+                        .HasColumnType("varchar(600)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("TestQuestionOptions", (string)null);
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.TestResponse", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("CarbonFootprintTestId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("SelectedOptionId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("TestId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarbonFootprintTestId");
+
+                    b.HasIndex("QuestionId");
+
+                    b.HasIndex("SelectedOptionId");
+
+                    b.ToTable("TestResponses", (string)null);
                 });
 
             modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Electrics.Electric", b =>
@@ -252,6 +353,49 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                     b.ToTable("Waters", (string)null);
                 });
 
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.CarbonFootprintTest", b =>
+                {
+                    b.HasOne("CarbonWise.BuildingBlocks.Domain.Users.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.TestQuestionOption", b =>
+                {
+                    b.HasOne("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.TestQuestion", null)
+                        .WithMany("Options")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.TestResponse", b =>
+                {
+                    b.HasOne("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.CarbonFootprintTest", null)
+                        .WithMany("Responses")
+                        .HasForeignKey("CarbonFootprintTestId");
+
+                    b.HasOne("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.TestQuestion", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.TestQuestionOption", "SelectedOption")
+                        .WithMany()
+                        .HasForeignKey("SelectedOptionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+
+                    b.Navigation("SelectedOption");
+                });
+
             modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Electrics.Electric", b =>
                 {
                     b.HasOne("CarbonWise.BuildingBlocks.Domain.Buildings.Building", "Building")
@@ -283,6 +427,16 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Vehicles");
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.CarbonFootprintTest", b =>
+                {
+                    b.Navigation("Responses");
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.TestQuestion", b =>
+                {
+                    b.Navigation("Options");
                 });
 #pragma warning restore 612, 618
         }
