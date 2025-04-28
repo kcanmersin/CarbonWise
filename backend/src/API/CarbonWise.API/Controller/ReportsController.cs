@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using CarbonWise.BuildingBlocks.Application.Services.Reports;
@@ -78,9 +79,12 @@ namespace CarbonWise.API.Controllers
     public class DateRangeRequest
     {
         [Required]
+        [DefaultValue("2020-04-28T20:40:11.760Z")]
         public DateTime StartDate { get; set; }
 
         [Required]
+        [DefaultValue("2025-04-28T20:40:11.760Z")]
+
         public DateTime EndDate { get; set; }
     }
 
@@ -91,11 +95,13 @@ namespace CarbonWise.API.Controllers
         public string ConsumptionType { get; set; }
 
         public Guid? BuildingId { get; set; }
-
         [Required]
+        [DefaultValue("2020-04-28T20:40:11.760Z")]
         public DateTime StartDate { get; set; }
 
         [Required]
+        [DefaultValue("2025-04-28T20:40:11.760Z")]
+
         public DateTime EndDate { get; set; }
     }
 }
