@@ -31,6 +31,9 @@ using CarbonWise.BuildingBlocks.Application.Services.LLMService;
 using CarbonWise.BuildingBlocks.Application.Services.CarbonFootPrintTest;
 using CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest;
 using CarbonWise.BuildingBlocks.Infrastructure.CarbonFootPrintTest;
+using CarbonWise.BuildingBlocks.Application.Services.Reports;
+using CarbonWise.BuildingBlocks.Application.Services.ExternalAPIs;
+using Microsoft.Extensions.Configuration;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
@@ -86,6 +89,9 @@ builder.Services.AddScoped<RegisterUserCommandHandler>();
 builder.Services.AddScoped<LoginCommandHandler>();
 builder.Services.AddScoped<GetUserQueryHandler>();
 
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IPdfReportService, PdfReportService>();
+
 builder.Services.Configure<LlmSettings>(builder.Configuration.GetSection("LlmSettings"));
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<ILlmService, LlmService>();
@@ -93,6 +99,9 @@ builder.Services.AddScoped<ILlmService, LlmService>();
 builder.Services.AddScoped<ICarbonFootprintTestRepository, CarbonFootprintTestRepository>();
 builder.Services.AddScoped<ITestQuestionRepository, TestQuestionRepository>();
 builder.Services.AddScoped<ICarbonFootprintTestService, CarbonFootprintTestService>();
+
+builder.Services.Configure<ExternalAPIsSettings>(builder.Configuration.GetSection("ExternalAPIs"));
+builder.Services.AddHttpClient<IExternalAPIsService, ExternalAPIsService>();
 
 builder.Services.AddScoped<CarbonWise.BuildingBlocks.Application.Services.Consumption.IConsumptionDataService,
                           CarbonWise.BuildingBlocks.Infrastructure.Services.Consumption.ConsumptionDataService>();
