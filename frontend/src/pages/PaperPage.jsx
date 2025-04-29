@@ -14,7 +14,7 @@ const PaperPage = () => {
   const [error, setError] = useState(null);
   
   // Available years for selection
-  const availableYears = [2023, 2024, 2025];
+  const availableYears = [2022, 2023, 2024, 2025];
   
   // Sidebar menu items
   const menuItems = [
@@ -38,7 +38,7 @@ const PaperPage = () => {
       ]
     },
     { key: "predictions", name: "Predictions" },
-    { key: "admin-tools", name: "Admin Tools" },
+    { key: "adminTools", name: "Admin Tools" },
     { key: "reports", name: "Reports" }
   ];
 

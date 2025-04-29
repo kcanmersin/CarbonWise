@@ -9,6 +9,11 @@ import PaperPage from "./pages/PaperPage";
 import NaturalGasPage from "./pages/NaturalGasPage";
 import CarbonFootprintCalculations from "./pages/CarbonFootprintCalculations";
 import CarbonFootprintTestPage from "./pages/CarbonFootprintTestPage";
+import ReportsPage from "./pages/ReportsPage";
+import AdminTools from "./pages/AdminTools";
+import BuildingsManagement from "./pages/BuildingManagementPage";
+import ConsumptionTypesManagement from "./pages/ConsumptionTypeManagementPage";
+import SchoolInfoPage from "./pages/SchoolInfoManagementPage";
 import { checkAuthStatus } from "./services/authService";
 
 function App() {
@@ -104,7 +109,38 @@ function App() {
             <ProtectedRoute>
               <CarbonFootprintTestPage />
             </ProtectedRoute>
-          } />          
+          } />
+
+          <Route path="/reports" element={
+            <ProtectedRoute>
+              <ReportsPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin" element={
+            <ProtectedRoute>
+              <AdminTools />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/buildings" element={
+            <ProtectedRoute>
+              <BuildingsManagement />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/consumption-types" element={
+            <ProtectedRoute>
+              <ConsumptionTypesManagement />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin/school-info" element={
+            <ProtectedRoute>
+              <SchoolInfoPage />
+            </ProtectedRoute>
+          } />
+
           {/* Fallback route */}
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

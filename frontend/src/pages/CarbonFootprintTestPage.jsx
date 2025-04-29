@@ -6,7 +6,7 @@ import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 const menuItems = [
   { key: "dashboard", name: "Dashboard" },
   {
-    key: "resourceMonitoring",
+    key: "resource-monitoring",
     name: "Resource Monitoring",
     subItems: [
       { key: "electricity", name: "Electricity" },
@@ -16,7 +16,7 @@ const menuItems = [
     ]
   },
   {
-    key: "carbonFootprint",
+    key: "carbon-footprint",
     name: "Carbon Footprint",
     subItems: [
       { key: "test", name: "Test" },

@@ -25,28 +25,28 @@ const CarbonFootprintCalculations = () => {
   
   // Sidebar menu items
   const menuItems = [
-    { name: "Dashboard", key: "dashboard" },
-    { 
-      name: "Resource Monitoring", 
-      key: "resourceMonitoring",
+    { key: "dashboard", name: "Dashboard" },
+    {
+      key: "resource-monitoring",
+      name: "Resource Monitoring",
       subItems: [
-        { name: "Electricity", key: "electricity" },
-        { name: "Water", key: "water" },
-        { name: "Paper", key: "paper" },
-        { name: "Natural Gas", key: "naturalGas" }
+        { key: "electricity", name: "Electricity" },
+        { key: "water", name: "Water" },
+        { key: "paper", name: "Paper" },
+        { key: "naturalGas", name: "Natural Gas" }
       ]
     },
-    { 
-      name: "Carbon Footprint", 
-      key: "carbonFootprint",
+    {
+      key: "carbon-footprint",
+      name: "Carbon Footprint",
       subItems: [
-        { name: "Test", key: "test" },
-        { name: "Calculations", key: "calculations" }
+        { key: "test", name: "Test" },
+        { key: "calculations", name: "Calculations" }
       ]
     },
-    { name: "Predictions", key: "predictions" },
-    { name: "Admin Tools", key: "adminTools" },
-    { name: "Reports", key: "reports" }
+    { key: "predictions", name: "Predictions" },
+    { key: "adminTools", name: "Admin Tools" },
+    { key: "reports", name: "Reports" }
   ];
 
   // Handle form input changes
