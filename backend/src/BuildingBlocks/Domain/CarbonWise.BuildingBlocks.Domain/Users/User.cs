@@ -13,7 +13,6 @@ namespace CarbonWise.BuildingBlocks.Domain.Users
         public DateTime CreatedAt { get; private set; }
         public DateTime? LastLoginAt { get; private set; }
 
-        // Protected constructor for EF Core
         protected User() { }
 
         private User(UserId id, string username, string email, string passwordHash, UserRole role)
@@ -28,7 +27,6 @@ namespace CarbonWise.BuildingBlocks.Domain.Users
 
         public static User Create(string username, string email, string passwordHash, UserRole role)
         {
-            // Validation rules
             if (string.IsNullOrWhiteSpace(username))
                 throw new ArgumentException("Username cannot be empty", nameof(username));
 
