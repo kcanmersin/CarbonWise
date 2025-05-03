@@ -34,6 +34,9 @@ using CarbonWise.BuildingBlocks.Infrastructure.CarbonFootPrintTest;
 using CarbonWise.BuildingBlocks.Application.Services.Reports;
 using CarbonWise.BuildingBlocks.Application.Services.ExternalAPIs;
 using Microsoft.Extensions.Configuration;
+
+
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
