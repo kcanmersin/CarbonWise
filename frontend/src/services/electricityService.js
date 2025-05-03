@@ -193,3 +193,54 @@ export const deleteElectricRecord = async (id) => {
     throw error;
   }
 };
+
+export const electricitydownloadSampleExcel = async () => {
+  try {
+    const response = await fetch(`${API_URL}/Electrics/downloadSampleExcel`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // if using authentication
+      },
+    });
+    
+    if (!response.ok) throw new Error('Failed to download template');
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Electricity_Template.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error(`Failed to download electricity template: ${err.message}`);
+    throw err; // Rethrow the error for further handling if needed
+  }
+};
+
+export const electricityMultipleUpload = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${API_URL}/Electrics/multiple`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to upload electricity data");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error uploading electricity data:", error);
+    throw error;
+  }
+}
