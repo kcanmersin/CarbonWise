@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using CarbonWise.BuildingBlocks.Domain.Buildings;
-using CarbonWise.BuildingBlocks.Infrastructure;
-using Microsoft.AspNetCore.Authorization;
+using CarbonWise.BuildingBlocks.Application.Features.Buildings;
+using CarbonWise.BuildingBlocks.Application.Features.Buildings.Commands;
+using CarbonWise.BuildingBlocks.Application.Features.Buildings.Queries;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CarbonWise.API.Controllers
@@ -13,35 +14,31 @@ namespace CarbonWise.API.Controllers
     [Route("api/[controller]")]
     public class BuildingsController : ControllerBase
     {
-        private readonly IBuildingRepository _buildingRepository;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IMediator _mediator;
 
-        public BuildingsController(
-            IBuildingRepository buildingRepository,
-            IUnitOfWork unitOfWork)
+        public BuildingsController(IMediator mediator)
         {
-            _buildingRepository = buildingRepository;
-            _unitOfWork = unitOfWork;
+            _mediator = mediator;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var buildings = await _buildingRepository.GetAllAsync();
-            return Ok(buildings.Select(MapToDto));
+            var result = await _mediator.Send(new GetAllBuildingsQuery());
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(Guid id)
         {
-            var building = await _buildingRepository.GetByIdAsync(new BuildingId(id));
+            var result = await _mediator.Send(new GetBuildingByIdQuery { Id = id });
 
-            if (building == null)
+            if (result == null)
             {
                 return NotFound();
             }
 
-            return Ok(MapToDto(building));
+            return Ok(result);
         }
 
         [HttpPost]
@@ -49,17 +46,17 @@ namespace CarbonWise.API.Controllers
         {
             try
             {
-                var building = Building.Create(
-                    request.Name,
-                    request.E_MeterCode,
-                    request.G_MeterCode);
+                var command = new CreateBuildingCommand
+                {
+                    Name = request.Name,
+                    E_MeterCode = request.E_MeterCode,
+                    G_MeterCode = request.G_MeterCode
+                };
 
-                await _buildingRepository.AddAsync(building);
-                await _unitOfWork.CommitAsync();
-
-                return CreatedAtAction(nameof(Get), new { id = building.Id.Value }, MapToDto(building));
+                var result = await _mediator.Send(command);
+                return CreatedAtAction(nameof(Get), new { id = result.Id }, result);
             }
-            catch (ArgumentException ex)
+            catch (ApplicationException ex)
             {
                 return BadRequest(new { error = ex.Message });
             }
@@ -68,26 +65,24 @@ namespace CarbonWise.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateBuildingRequest request)
         {
-            var building = await _buildingRepository.GetByIdAsync(new BuildingId(id));
-
-            if (building == null)
-            {
-                return NotFound();
-            }
-
             try
             {
-                building.Update(
-                    request.Name,
-                    request.E_MeterCode,
-                    request.G_MeterCode);
+                var command = new UpdateBuildingCommand
+                {
+                    Id = id,
+                    Name = request.Name,
+                    E_MeterCode = request.E_MeterCode,
+                    G_MeterCode = request.G_MeterCode
+                };
 
-                await _buildingRepository.UpdateAsync(building);
-                await _unitOfWork.CommitAsync();
-
-                return Ok(MapToDto(building));
+                var result = await _mediator.Send(command);
+                return Ok(result);
             }
-            catch (ArgumentException ex)
+            catch (ApplicationException ex) when (ex.Message.Contains("not found"))
+            {
+                return NotFound(ex.Message);
+            }
+            catch (ApplicationException ex)
             {
                 return BadRequest(new { error = ex.Message });
             }
@@ -96,50 +91,34 @@ namespace CarbonWise.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var building = await _buildingRepository.GetByIdAsync(new BuildingId(id));
+            var result = await _mediator.Send(new DeleteBuildingCommand { Id = id });
 
-            if (building == null)
+            if (!result)
             {
                 return NotFound();
             }
 
-            await _buildingRepository.DeleteAsync(new BuildingId(id));
-            await _unitOfWork.CommitAsync();
-
             return NoContent();
-        }
-
-        private static BuildingDto MapToDto(Building building)
-        {
-            return new BuildingDto
-            {
-                Id = building.Id.Value,
-                Name = building.Name,
-                E_MeterCode = building.E_MeterCode,
-                G_MeterCode = building.G_MeterCode
-            };
         }
     }
 
     public class CreateBuildingRequest
     {
+        [Required]
         public string Name { get; set; }
+
         public string E_MeterCode { get; set; }
+
         public string G_MeterCode { get; set; }
     }
 
     public class UpdateBuildingRequest
     {
+        [Required]
         public string Name { get; set; }
-        public string E_MeterCode { get; set; }
-        public string G_MeterCode { get; set; }
-    }
 
-    public class BuildingDto
-    {
-        public Guid Id { get; set; }
-        public string Name { get; set; }
         public string E_MeterCode { get; set; }
+
         public string G_MeterCode { get; set; }
     }
 }

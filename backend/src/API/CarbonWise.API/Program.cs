@@ -110,6 +110,7 @@ builder.Services.AddMediatR(cfg => {
     cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.NaturalGases.NaturalGasDto).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.Papers.PaperDto).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.Waters.WaterDto).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.Buildings.BuildingDto).Assembly);
 
 });
 // Add HttpContextAccessor

@@ -68,3 +68,4 @@ ClientBin/
 *.mdf
 *.ldf
 *.sdf
+/backend/src/API/CarbonWise.API/appsettings.json
