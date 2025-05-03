@@ -8,7 +8,7 @@ using CarbonWise.BuildingBlocks.Application.Services.LLMService;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
-
+using System.Text;
 namespace CarbonWise.BuildingBlocks.Application.Services.Reports
 {
     public class PdfReportService : IPdfReportService
@@ -20,6 +20,7 @@ namespace CarbonWise.BuildingBlocks.Application.Services.Reports
         {
             _reportService = reportService;
             _llmService = llmService;
+
             QuestPDF.Settings.DocumentLayoutExceptionThreshold = 50000;
         }
 
@@ -42,7 +43,13 @@ namespace CarbonWise.BuildingBlocks.Application.Services.Reports
                 }).GeneratePdf();
             }
 
+            if (report.Analysis != null)
+            {
+                report.Analysis = SanitizeTextForPdf(report.Analysis);
+            }
+
             string actionRecommendations = await GenerateLlmActionRecommendations(carbonFootprints, startDate, endDate);
+            actionRecommendations = SanitizeTextForPdf(actionRecommendations);
 
             return Document.Create(document =>
             {
@@ -50,6 +57,7 @@ namespace CarbonWise.BuildingBlocks.Application.Services.Reports
                 {
                     page.Size(PageSizes.A4);
                     page.Margin(2, Unit.Centimetre);
+                    page.DefaultTextStyle(style => style.FontFamily("Arial"));
 
                     page.Header().Element(container =>
                     {
@@ -248,16 +256,92 @@ namespace CarbonWise.BuildingBlocks.Application.Services.Reports
             }).GeneratePdf();
         }
 
+        private string SanitizeBuildingName(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                return name;
+
+            var replacements = new Dictionary<char, char>
+            {
+                {'İ', 'I'},
+                {'ı', 'i'},
+                {'Ş', 'S'},
+                {'ş', 's'},
+                {'Ğ', 'G'},
+                {'ğ', 'g'},
+                {'Ü', 'U'},
+                {'ü', 'u'},
+                {'Ö', 'O'},
+                {'ö', 'o'},
+                {'Ç', 'C'},
+                {'ç', 'c'}
+            };
+
+            var result = new StringBuilder(name.Length);
+            foreach (char c in name)
+            {
+                if (replacements.TryGetValue(c, out char replacement))
+                    result.Append(replacement);
+                else
+                    result.Append(c);
+            }
+
+            return result.ToString();
+        }
+
+        private string SanitizeTextForPdf(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return text;
+
+            text = text.Replace("\t", "    ");
+            text = text.Replace("\r", "");
+
+            var replacements = new Dictionary<char, char>
+            {
+                {'İ', 'I'},
+                {'ı', 'i'},
+                {'Ş', 'S'},
+                {'ş', 's'},
+                {'Ğ', 'G'},
+                {'ğ', 'g'},
+                {'Ü', 'U'},
+                {'ü', 'u'},
+                {'Ö', 'O'},
+                {'ö', 'o'},
+                {'Ç', 'C'},
+                {'ç', 'c'}
+            };
+
+            var result = new StringBuilder(text.Length);
+            foreach (char c in text)
+            {
+                if (replacements.TryGetValue(c, out char replacement))
+                    result.Append(replacement);
+                else
+                    result.Append(c);
+            }
+
+            return result.ToString();
+        }
+
         public async Task<byte[]> GenerateConsumptionPdfReportAsync(string consumptionType, Guid? buildingId, DateTime startDate, DateTime endDate)
         {
             var report = await _reportService.GenerateConsumptionReportAsync(consumptionType, buildingId, startDate, endDate);
 
-            if (report.Analysis != null)
+            if (report.BuildingName != null)
             {
-                report.Analysis = CleanTextForPdf(report.Analysis);
+                report.BuildingName = SanitizeBuildingName(report.BuildingName);
             }
 
-            string efficiencyRecommendations = await GenerateLlmEfficiencyRecommendations(consumptionType, report.Data, startDate, endDate, report.BuildingName);
+            if (report.Analysis != null)
+            {
+                report.Analysis = SanitizeTextForPdf(report.Analysis);
+            }
+
+            string efficiencyRecommendations = await GenerateLlmEfficiencyRecommendations(
+                consumptionType, report.Data, startDate, endDate, report.BuildingName);
+            efficiencyRecommendations = SanitizeTextForPdf(efficiencyRecommendations);
 
             return GenerateEnhancedConsumptionPdf(report, efficiencyRecommendations);
         }
@@ -309,7 +393,8 @@ Keep your response concise (maximum 300 words) and focused on practical recommen
         {
             try
             {
-                string buildingScope = string.IsNullOrEmpty(buildingName) ? "the entire university" : $"the {buildingName} building";
+                string sanitizedBuildingName = SanitizeBuildingName(buildingName);
+                string buildingScope = string.IsNullOrEmpty(sanitizedBuildingName) ? "the entire university" : $"the {sanitizedBuildingName} building";
 
                 var prompt = $@"You are an expert in resource efficiency and sustainability for educational institutions.
 
@@ -340,13 +425,7 @@ Keep your recommendations concise (maximum 300 words), practical and tailored sp
 
         private string CleanTextForPdf(string text)
         {
-            if (string.IsNullOrEmpty(text))
-                return text;
-
-            text = text.Replace("\t", "    ");
-            text = text.Replace("\r", "");
-
-            return text;
+            return SanitizeTextForPdf(text);
         }
 
         private byte[] GenerateEnhancedConsumptionPdf(ReportDto report, string efficiencyRecommendations)
@@ -358,7 +437,7 @@ Keep your recommendations concise (maximum 300 words), practical and tailored sp
                     page.Size(PageSizes.A4);
                     page.Margin(1, Unit.Centimetre);
                     page.PageColor(Colors.White);
-                    page.DefaultTextStyle(text => text.FontSize(11));
+                    page.DefaultTextStyle(text => text.FontSize(11).FontFamily("Arial"));
 
                     page.Header().Element(ComposeHeader);
 
@@ -651,6 +730,8 @@ Keep your recommendations concise (maximum 300 words), practical and tailored sp
 
         private void AddElectricDataSummary(ColumnDescriptor column, List<ConsumptionDataDto> data, string buildingName)
         {
+            buildingName = SanitizeBuildingName(buildingName);
+
             var monthlyData = data
                 .GroupBy(d => new { Year = d.Date.Year, Month = d.Date.Month })
                 .Select(g => new
@@ -739,6 +820,8 @@ Keep your recommendations concise (maximum 300 words), practical and tailored sp
 
         private void AddNaturalGasDataSummary(ColumnDescriptor column, List<ConsumptionDataDto> data, string buildingName)
         {
+            buildingName = SanitizeBuildingName(buildingName);
+
             var monthlyData = data
                 .GroupBy(d => new { Year = d.Date.Year, Month = d.Date.Month })
                 .Select(g => new
@@ -827,6 +910,8 @@ Keep your recommendations concise (maximum 300 words), practical and tailored sp
 
         private void AddGenericConsumptionSummary(ColumnDescriptor column, List<ConsumptionDataDto> data, string consumptionType, string buildingName)
         {
+            buildingName = SanitizeBuildingName(buildingName);
+
             var monthlyData = data
                 .GroupBy(d => new { Year = d.Date.Year, Month = d.Date.Month })
                 .Select(g => new
