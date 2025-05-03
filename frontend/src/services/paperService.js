@@ -166,3 +166,54 @@ export const getMonthlyPaperUsage = async (year) => {
     throw error;
   }
 };
+
+export const papersdownloadSampleExcel = async () => {
+  try {
+    const response = await fetch(`${API_URL}/Papers/downloadSampleExcel`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // if using authentication
+      },
+    });
+    
+    if (!response.ok) throw new Error('Failed to download template');
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Papers_Template.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Error downloading sample Excel template:", err);
+    throw err;
+  }
+};
+
+export const papersMultipleUpload = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${API_URL}/Papers/multiple`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to upload multiple paper records");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error uploading multiple paper records:", error);
+    throw error;
+  }
+};

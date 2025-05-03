@@ -8,7 +8,8 @@ import {
   createElectricRecord, 
   updateElectricRecord, 
   deleteElectricRecord,
-  filterElectrics
+  electricitydownloadSampleExcel,
+  electricityMultipleUpload
 } from "../services/electricityService";
 
 import {
@@ -16,7 +17,8 @@ import {
   createNaturalGasRecord,
   updateNaturalGasRecord,
   deleteNaturalGasRecord,
-  filterNaturalGas
+  naturalGasdownloadSampleExcel,
+  naturalGasMultipleUpload
 } from "../services/naturalGasService";
 
 import {
@@ -24,7 +26,8 @@ import {
   createPaper,
   updatePaper,
   deletePaper,
-  filterPapers
+  papersdownloadSampleExcel,
+  papersMultipleUpload
 } from "../services/paperService";
 
 import {
@@ -32,7 +35,8 @@ import {
   createWater,
   updateWater,
   deleteWater,
-  filterWaters
+  waterdownloadSampleExcel,
+  watersMultipleUpload
 } from "../services/waterService";
 
 export default function ConsumptionTypesManagement() {
@@ -42,6 +46,7 @@ export default function ConsumptionTypesManagement() {
   const [selectedType, setSelectedType] = useState("Electric");
   const [editingRecord, setEditingRecord] = useState(null);
   const formRef = useRef(null);
+  const fileInputRef = useRef(null);
   
   // Initialize form data with proper fields for each type
   const initialFormData = {
@@ -469,29 +474,65 @@ const handleEdit = (record) => {
     return building ? building.name : "Unknown Building";
   };
 
-  // Get consumption value to display based on record type
-  const getConsumptionValue = (record) => {
-    switch (selectedType) {
-      case "Electric":
-        return `${record.kwhValue} kWh`;
-      case "NaturalGas":
-        return `${record.sM3Value} m³`;
-      case "Paper":
-        return `${record.usage} kg`;
-      case "Water":
-        const waterUsage = record.finalMeterValue - record.initialMeterValue;
-        return `${waterUsage} m³`;
-      default:
-        return "N/A";
+  const handleDownloadTemplate = async () => {
+    setError(null);
+    try {
+      switch (selectedType) {
+        case "Electric":
+          await electricitydownloadSampleExcel();
+          break;
+        case "NaturalGas":
+          await naturalGasdownloadSampleExcel();
+          break;
+        case "Water":
+          await waterdownloadSampleExcel();
+          break;
+        case "Paper":
+          await papersdownloadSampleExcel();
+          break;
+        default:
+          throw new Error(`Unknown consumption type: ${selectedType}`);
+      }
+    } catch (err) {
+      setError(err.message);
     }
   };
-
-  // Get meter reading info if applicable
-  const getMeterReadings = (record) => {
-    if (["Electric", "NaturalGas", "Water"].includes(selectedType)) {
-      return `${record.initialMeterValue} → ${record.finalMeterValue}`;
+  
+  // Upload handler for current consumption type
+  const handleUploadExcel = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+  
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      switch (selectedType) {
+        case "Electric":
+          await electricityMultipleUpload(file); // Pass just the file, not the event
+          break;
+        case "NaturalGas":
+          await naturalGasMultipleUpload(file);
+          break;
+        case "Water":
+          await watersMultipleUpload(file);
+          break;
+        case "Paper":
+          await papersMultipleUpload(file);
+          break;
+        default:
+          throw new Error(`Unknown consumption type: ${selectedType}`);
+      }
+      
+      // Refresh data after successful upload
+      fetchConsumptionData();
+      alert(`Successfully uploaded multiple ${selectedType} records!`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+      e.target.value = ''; // Reset file input
     }
-    return null;
   };
 
   return (
@@ -510,39 +551,65 @@ const handleEdit = (record) => {
           </div>
         </div>
 
-       
-
-        {/* Consumption Type Selector */}
+        {/* Consumption Type Selector and Download Button */}
         <div style={{
           display: "flex",
-          gap: "1rem",
+          justifyContent: "space-between", // This will push items to edges
+          alignItems: "center",
           marginBottom: "2rem",
-          overflowX: "auto",
-          paddingBottom: "0.5rem"
+          gap: "1rem"
         }}>
-          {consumptionTypes.map(type => (
-            <button
-              key={type.type}
-              onClick={() => handleTypeSelect(type.type)}
-              style={{
-                padding: "1rem 1.5rem",
-                backgroundColor: selectedType === type.type ? type.color : "white",
-                color: selectedType === type.type ? "white" : "#34495e",
-                border: `2px solid ${type.color}`,
-                borderRadius: "8px",
-                cursor: "pointer",
-                fontWeight: "bold",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                minWidth: "150px",
-                justifyContent: "center"
-              }}
-            >
-              <span style={{ fontSize: "1.5rem" }}>{type.icon}</span>
-              {type.type}
-            </button>
-          ))}
+          {/* Consumption type buttons */}
+          <div style={{
+            display: "flex",
+            gap: "1rem",
+            overflowX: "auto",
+            paddingBottom: "0.5rem"
+          }}>
+            {consumptionTypes.map(type => (
+              <button
+                key={type.type}
+                onClick={() => handleTypeSelect(type.type)}
+                style={{
+                  padding: "1rem 1.5rem",
+                  backgroundColor: selectedType === type.type ? type.color : "white",
+                  color: selectedType === type.type ? "white" : "#34495e",
+                  border: `2px solid ${type.color}`,
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  minWidth: "150px",
+                  justifyContent: "center"
+                }}
+              >
+                <span style={{ fontSize: "1.5rem" }}>{type.icon}</span>
+                {type.type}
+              </button>
+            ))}
+          </div>
+          
+          {/* Download button - will be pushed to the right */}
+          <button
+            onClick={handleDownloadTemplate}
+            style={{
+              padding: "1rem 1.5rem",
+              backgroundColor: getCurrentTypeConfig().color,
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              fontWeight: "bold",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              minWidth: "200px"
+            }}
+          >
+            📥 Download Excel Template
+          </button>
         </div>
 
         <div ref={formRef}
@@ -831,7 +898,8 @@ const handleEdit = (record) => {
             <div style={{ 
               display: "flex",
               gap: "1rem",
-              justifyContent: "flex-end"
+              justifyContent: "flex-end",
+              alignItems: "center" // Add this for alignment
             }}>
               {editingRecord && (
                 <button
@@ -867,6 +935,35 @@ const handleEdit = (record) => {
               >
                 {isLoading ? "Saving..." : (editingRecord ? `Update ${selectedType} Record` : `Add ${selectedType} Record`)}
               </button>
+              
+              {/* Add upload button here */}
+              <div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleUploadExcel}
+                  accept=".xlsx,.xls"
+                  style={{ display: 'none' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading}
+                  style={{
+                    padding: "0.75rem 1.5rem",
+                    backgroundColor: "#9b59b6",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: isLoading ? "not-allowed" : "pointer",
+                    fontWeight: "bold",
+                    opacity: isLoading ? 0.7 : 1,
+                    minWidth: "150px"
+                  }}
+                >
+                  📤 Add Multiple Records
+                </button>
+              </div>
             </div>
           </form>
         </div>
