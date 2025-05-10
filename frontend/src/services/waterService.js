@@ -112,17 +112,14 @@ export const deleteWater = async (id) => {
   }
 };
 
-export const filterWaters = async (startDate, endDate) => {
+export const filterWaters = async (filterParams) => {
   try {
-    let url = `${API_URL}/Waters/filter?`;
-    if (startDate) {
-      url += `startDate=${startDate.toISOString()}`;
-    }
-    if (endDate) {
-      url += `${startDate ? '&' : ''}endDate=${endDate.toISOString()}`;
-    }
+    // Create query string from filter parameters
+    const queryParams = new URLSearchParams();
+    if (filterParams.startDate) queryParams.append("StartDate", filterParams.startDate.toISOString());
+    if (filterParams.endDate) queryParams.append("EndDate", filterParams.endDate.toISOString());
 
-    const response = await fetch(url, {
+    const response = await fetch(`${API_URL}/Waters/filter?${queryParams}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -132,12 +129,12 @@ export const filterWaters = async (startDate, endDate) => {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || "Failed to filter water records");
+      throw new Error(error.error || "Failed to filter water data");
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Error filtering water records:", error);
+    console.error("Error filtering water data:", error);
     throw error;
   }
 };
