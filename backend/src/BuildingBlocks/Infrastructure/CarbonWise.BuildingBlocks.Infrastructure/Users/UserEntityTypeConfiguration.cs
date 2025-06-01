@@ -23,13 +23,11 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Users
 
             builder.Property(u => u.Name)
                 .HasMaxLength(100)
-                .IsRequired()
-                .HasDefaultValue("");
+                .IsRequired(false);
 
             builder.Property(u => u.Surname)
                 .HasMaxLength(100)
-                .IsRequired()
-                .HasDefaultValue("");
+                .IsRequired(false);
 
             builder.Property(u => u.Email)
                 .HasMaxLength(255)
@@ -37,35 +35,30 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Users
 
             builder.Property(u => u.Gender)
                 .HasMaxLength(20)
-                .IsRequired()
-                .HasDefaultValue("Other");
+                .IsRequired(false);
 
             builder.Property(u => u.IsInInstitution)
-                .IsRequired()
-                .HasDefaultValue(false);
+                .IsRequired();
 
             builder.Property(u => u.IsStudent)
-                .IsRequired()
-                .HasDefaultValue(false);
+                .IsRequired();
 
             builder.Property(u => u.IsAcademicPersonal)
-                .IsRequired()
-                .HasDefaultValue(false);
+                .IsRequired();
 
             builder.Property(u => u.IsAdministrativeStaff)
-                .IsRequired()
-                .HasDefaultValue(false);
+                .IsRequired();
 
             builder.Property(u => u.UniqueId)
                 .HasMaxLength(255)
-                .IsRequired();
+                .IsRequired(false);
 
             builder.Property(u => u.SustainabilityPoint)
-                .HasDefaultValue(0);
+                .IsRequired(false);
 
             builder.Property(u => u.ApiKey)
-                .HasMaxLength(255)
-                .IsRequired();
+                .HasMaxLength(500)
+                .IsRequired(false);
 
             builder.Property(u => u.PasswordHash)
                 .IsRequired();
@@ -77,13 +70,13 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Users
             builder.Property(u => u.CreatedAt)
                 .IsRequired();
 
+            builder.Property(u => u.LastLoginAt)
+                .IsRequired(false);
+
             builder.HasIndex(u => u.Username)
                 .IsUnique();
 
             builder.HasIndex(u => u.Email)
-                .IsUnique();
-
-            builder.HasIndex(u => u.UniqueId)
                 .IsUnique();
         }
     }

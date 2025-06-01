@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace CarbonWise.BuildingBlocks.Domain.Users
 {
@@ -25,6 +26,7 @@ namespace CarbonWise.BuildingBlocks.Domain.Users
         protected User() { }
 
         private User(
+            UserId id,
             string username,
             string name,
             string surname,
@@ -40,7 +42,7 @@ namespace CarbonWise.BuildingBlocks.Domain.Users
             string passwordHash,
             UserRole role)
         {
-            Id = new UserId(Guid.NewGuid());
+            Id = id;
             Username = username;
             Name = name;
             Surname = surname;
@@ -68,6 +70,7 @@ namespace CarbonWise.BuildingBlocks.Domain.Users
                 throw new ArgumentException("Password cannot be empty", nameof(passwordHash));
 
             var user = new User(
+                new UserId(Guid.NewGuid()),
                 username: username,
                 name: "",
                 surname: "",
@@ -78,7 +81,7 @@ namespace CarbonWise.BuildingBlocks.Domain.Users
                 isAcademicPersonal: false,
                 isAdministrativeStaff: false,
                 uniqueId: email,
-                sustainabilityPoint: 0,
+                sustainabilityPoint: null,
                 apiKey: GenerateApiKey(),
                 passwordHash: passwordHash,
                 role: role
@@ -106,6 +109,7 @@ namespace CarbonWise.BuildingBlocks.Domain.Users
                 throw new ArgumentException("Email cannot be empty", nameof(email));
 
             var user = new User(
+                new UserId(Guid.NewGuid()),
                 username: username,
                 name: name ?? "",
                 surname: surname ?? "",
@@ -116,7 +120,7 @@ namespace CarbonWise.BuildingBlocks.Domain.Users
                 isAcademicPersonal: isAcademicPersonal,
                 isAdministrativeStaff: isAdministrativeStaff,
                 uniqueId: uniqueId ?? email,
-                sustainabilityPoint: 0,
+                sustainabilityPoint: null,
                 apiKey: GenerateApiKey(),
                 passwordHash: GenerateRandomPasswordHash(),
                 role: UserRole.User
@@ -156,7 +160,15 @@ namespace CarbonWise.BuildingBlocks.Domain.Users
 
         public void UpdateSustainabilityPoint(int points)
         {
+            if (points < 0)
+                throw new ArgumentException("Sustainability points cannot be negative", nameof(points));
+
             SustainabilityPoint = points;
+        }
+
+        public void ClearSustainabilityPoint()
+        {
+            SustainabilityPoint = null;
         }
 
         private static string GenerateApiKey()

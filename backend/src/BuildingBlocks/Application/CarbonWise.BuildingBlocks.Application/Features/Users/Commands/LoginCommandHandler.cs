@@ -46,7 +46,16 @@ namespace CarbonWise.BuildingBlocks.Application.Users.Commands
             {
                 Id = user.Id.Value,
                 Username = user.Username,
+                Name = user.Name,
+                Surname = user.Surname,
                 Email = user.Email,
+                Gender = user.Gender,
+                IsInInstitution = user.IsInInstitution,
+                IsStudent = user.IsStudent,
+                IsAcademicPersonal = user.IsAcademicPersonal,
+                IsAdministrativeStaff = user.IsAdministrativeStaff,
+                UniqueId = user.UniqueId,
+                SustainabilityPoint = user.SustainabilityPoint,
                 Role = user.Role.ToString(),
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt
