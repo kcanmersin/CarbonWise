@@ -6,8 +6,18 @@ namespace CarbonWise.BuildingBlocks.Domain.Users
     public class User : Entity, IAggregateRoot
     {
         public UserId Id { get; private set; }
-        public string Username { get; private set; }
-        public string Email { get; private set; }
+        public string Username { get; set; }
+        public string Name { get; set; }
+        public string Surname { get; set; }
+        public string Email { get; set; }
+        public string Gender { get; set; }
+        public bool IsInInstitution { get; set; }
+        public bool IsStudent { get; set; }
+        public bool IsAcademicPersonal { get; set; }
+        public bool IsAdministrativeStaff { get; set; }
+        public string UniqueId { get; set; }
+        public int? SustainabilityPoint { get; set; }
+        public string apiKey { get; set; }
         public string PasswordHash { get; private set; }
         public UserRole Role { get; private set; }
         public DateTime CreatedAt { get; private set; }
@@ -15,13 +25,33 @@ namespace CarbonWise.BuildingBlocks.Domain.Users
 
         protected User() { }
 
-        private User(UserId id, string username, string email, string passwordHash, UserRole role)
+        public User(
+            string username,
+            string name,
+            string surname,
+            string email,
+            string gender,
+            bool isInInstitution,
+            bool isStudent,
+            bool isAcademicPersonal,
+            bool isAdministrativeStaff,
+            string uniqueId,
+            int? sustainabilityPoint,
+            string apiKey)
         {
-            Id = id;
+            Id = new UserId(Guid.NewGuid());
             Username = username;
+            Name = name;
+            Surname = surname;
             Email = email;
-            PasswordHash = passwordHash;
-            Role = role;
+            Gender = gender;
+            IsInInstitution = isInInstitution;
+            IsStudent = isStudent;
+            IsAcademicPersonal = isAcademicPersonal;
+            IsAdministrativeStaff = isAdministrativeStaff;
+            UniqueId = uniqueId;
+            SustainabilityPoint = sustainabilityPoint;
+            this.apiKey = apiKey;
             CreatedAt = DateTime.UtcNow;
         }
 
@@ -36,7 +66,15 @@ namespace CarbonWise.BuildingBlocks.Domain.Users
             if (string.IsNullOrWhiteSpace(passwordHash))
                 throw new ArgumentException("Password cannot be empty", nameof(passwordHash));
 
-            var user = new User(new UserId(Guid.NewGuid()), username, email, passwordHash, role);
+            var user = new User
+            {
+                Id = new UserId(Guid.NewGuid()),
+                Username = username,
+                Email = email,
+                PasswordHash = passwordHash,
+                Role = role,
+                CreatedAt = DateTime.UtcNow
+            };
 
             user.AddDomainEvent(new UserCreatedDomainEvent(user.Id));
 

@@ -1,4 +1,5 @@
 ﻿using CarbonWise.BuildingBlocks.Domain.Waters;
+using CarbonWise.BuildingBlocks.Domain.Buildings;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,29 +11,41 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Waters
         {
             builder.ToTable("Waters");
 
-            builder.HasKey(e => e.Id);
+            builder.HasKey(w => w.Id);
 
-            builder.Property(e => e.Id)
+            builder.Property(w => w.Id)
                 .HasConversion(
                     waterId => waterId.Value,
                     dbId => new WaterId(dbId));
 
-            builder.Property(e => e.Date)
+            builder.Property(w => w.Date)
                 .IsRequired();
 
-            builder.Property(e => e.InitialMeterValue)
+            builder.Property(w => w.InitialMeterValue)
                 .IsRequired()
                 .HasPrecision(18, 2);
 
-            builder.Property(e => e.FinalMeterValue)
+            builder.Property(w => w.FinalMeterValue)
                 .IsRequired()
                 .HasPrecision(18, 2);
 
-            builder.Property(e => e.Usage)
+            builder.Property(w => w.Usage)
                 .IsRequired()
                 .HasPrecision(18, 2);
 
-            builder.HasIndex(e => e.Date);
+            builder.Property(w => w.BuildingId)
+                .HasConversion(
+                    buildingId => buildingId.Value,
+                    dbId => new BuildingId(dbId))
+                .IsRequired();
+
+            builder.HasOne(w => w.Building)
+                .WithMany()
+                .HasForeignKey(w => w.BuildingId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasIndex(w => w.Date);
+            builder.HasIndex(w => w.BuildingId);
         }
     }
 }

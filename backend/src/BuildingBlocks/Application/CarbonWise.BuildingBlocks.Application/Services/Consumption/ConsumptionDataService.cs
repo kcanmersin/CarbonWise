@@ -92,7 +92,9 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Services.Consumption
                 Date = w.Date,
                 InitialMeterValue = w.InitialMeterValue,
                 FinalMeterValue = w.FinalMeterValue,
-                Usage = w.Usage
+                Usage = w.Usage,
+                BuildingId = w.BuildingId.Value,
+                BuildingName = w.Building?.Name
             });
         }
 
@@ -167,7 +169,9 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Services.Consumption
                 Date = p.Date,
                 Usage = p.Usage,
                 InitialMeterValue = 0,
-                FinalMeterValue = 0
+                FinalMeterValue = 0,
+                BuildingId = p.BuildingId.Value,
+                BuildingName = p.Building?.Name
             });
         }
 
@@ -178,6 +182,7 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Services.Consumption
             {
                 if (consumptionType.Equals("Water", StringComparison.OrdinalIgnoreCase))
                 {
+                    // Water için building-based gruplandırma
                     var allSheet = package.Workbook.Worksheets.Add("All");
 
                     allSheet.Cells[1, 1].Value = "ID";
@@ -185,6 +190,7 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Services.Consumption
                     allSheet.Cells[1, 3].Value = "Initial Meter Value";
                     allSheet.Cells[1, 4].Value = "Final Meter Value";
                     allSheet.Cells[1, 5].Value = "Usage";
+                    allSheet.Cells[1, 6].Value = "Building";
 
                     var sortedData = data.OrderBy(d => d.Date).ToList();
 
@@ -196,6 +202,7 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Services.Consumption
                         allSheet.Cells[row, 3].Value = item.InitialMeterValue;
                         allSheet.Cells[row, 4].Value = item.FinalMeterValue;
                         allSheet.Cells[row, 5].Value = item.Usage;
+                        allSheet.Cells[row, 6].Value = item.BuildingName;
                         row++;
                     }
 
@@ -205,13 +212,50 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Services.Consumption
                         string yRange = $"E2:E{row - 1}";
                         AddChart(allSheet, xRange, yRange, "Usage Over Time");
                     }
+
+                    // Building bazında ayrı sheet'ler oluştur
+                    var buildingGroups = data.GroupBy(d => d.BuildingName);
+
+                    foreach (var group in buildingGroups.Where(g => !string.IsNullOrEmpty(g.Key)))
+                    {
+                        var sanitizedSheetName = CleanSheetName(group.Key);
+                        var sheet = package.Workbook.Worksheets.Add(sanitizedSheetName);
+
+                        sheet.Cells[1, 1].Value = "ID";
+                        sheet.Cells[1, 2].Value = "Date";
+                        sheet.Cells[1, 3].Value = "Initial Meter Value";
+                        sheet.Cells[1, 4].Value = "Final Meter Value";
+                        sheet.Cells[1, 5].Value = "Usage";
+
+                        var sortedGroupData = group.OrderBy(d => d.Date).ToList();
+
+                        int rowBuilding = 2;
+                        foreach (var item in sortedGroupData)
+                        {
+                            sheet.Cells[rowBuilding, 1].Value = item.Id;
+                            sheet.Cells[rowBuilding, 2].Value = item.Date.ToString("yyyy-MM-dd");
+                            sheet.Cells[rowBuilding, 3].Value = item.InitialMeterValue;
+                            sheet.Cells[rowBuilding, 4].Value = item.FinalMeterValue;
+                            sheet.Cells[rowBuilding, 5].Value = item.Usage;
+                            rowBuilding++;
+                        }
+
+                        if (includeGraphs && rowBuilding > 2)
+                        {
+                            string xRange = $"B2:B{rowBuilding - 1}";
+                            string yRange = $"E2:E{rowBuilding - 1}";
+                            string chartTitle = $"Usage Over Time - {group.Key}";
+                            AddChart(sheet, xRange, yRange, chartTitle);
+                        }
+                    }
                 }
                 else if (consumptionType.Equals("Paper", StringComparison.OrdinalIgnoreCase))
                 {
-                    var allSheet = package.Workbook.Worksheets.Add("Yearly");
+                    // Paper için hem genel özet hem de building bazında ayrım
+                    var yearlySheet = package.Workbook.Worksheets.Add("Yearly Summary");
 
-                    allSheet.Cells[1, 1].Value = "Year";
-                    allSheet.Cells[1, 2].Value = "Total Usage";
+                    yearlySheet.Cells[1, 1].Value = "Year";
+                    yearlySheet.Cells[1, 2].Value = "Total Usage";
 
                     var groupedData = data
                         .GroupBy(d => d.Date.Year)
@@ -226,8 +270,8 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Services.Consumption
                     int row = 2;
                     foreach (var item in groupedData)
                     {
-                        allSheet.Cells[row, 1].Value = item.Year;
-                        allSheet.Cells[row, 2].Value = item.TotalUsage;
+                        yearlySheet.Cells[row, 1].Value = item.Year;
+                        yearlySheet.Cells[row, 2].Value = item.TotalUsage;
                         row++;
                     }
 
@@ -235,7 +279,39 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Services.Consumption
                     {
                         string xRange = $"A2:A{row - 1}";
                         string yRange = $"B2:B{row - 1}";
-                        AddChart(allSheet, xRange, yRange, "Total Usage Per Year", isYear: true);
+                        AddChart(yearlySheet, xRange, yRange, "Total Usage Per Year", isYear: true);
+                    }
+
+                    // Building bazında sheet'ler oluştur
+                    var buildingGroups = data.GroupBy(d => d.BuildingName);
+
+                    foreach (var group in buildingGroups.Where(g => !string.IsNullOrEmpty(g.Key)))
+                    {
+                        var sanitizedSheetName = CleanSheetName(group.Key);
+                        var sheet = package.Workbook.Worksheets.Add(sanitizedSheetName);
+
+                        sheet.Cells[1, 1].Value = "ID";
+                        sheet.Cells[1, 2].Value = "Date";
+                        sheet.Cells[1, 3].Value = "Usage";
+
+                        var sortedGroupData = group.OrderBy(d => d.Date).ToList();
+
+                        int rowBuilding = 2;
+                        foreach (var item in sortedGroupData)
+                        {
+                            sheet.Cells[rowBuilding, 1].Value = item.Id;
+                            sheet.Cells[rowBuilding, 2].Value = item.Date.ToString("yyyy-MM-dd");
+                            sheet.Cells[rowBuilding, 3].Value = item.Usage;
+                            rowBuilding++;
+                        }
+
+                        if (includeGraphs && rowBuilding > 2)
+                        {
+                            string xRange = $"B2:B{rowBuilding - 1}";
+                            string yRange = $"C2:C{rowBuilding - 1}";
+                            string chartTitle = $"Usage Over Time - {group.Key}";
+                            AddChart(sheet, xRange, yRange, chartTitle);
+                        }
                     }
                 }
                 else
@@ -279,50 +355,47 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Services.Consumption
                         AddChart(allSheetStandard, xRange, yRange, "Total Usage Over Period");
                     }
 
-                    if (consumptionType.Equals("Electric", StringComparison.OrdinalIgnoreCase) ||
-                        consumptionType.Equals("NaturalGas", StringComparison.OrdinalIgnoreCase))
+                    // Building bazında sheet'ler oluştur
+                    var buildingGroups = data.GroupBy(d => d.BuildingName);
+
+                    foreach (var group in buildingGroups.Where(g => !string.IsNullOrEmpty(g.Key)))
                     {
-                        var buildingGroups = data.GroupBy(d => d.BuildingName);
+                        var sanitizedSheetName = CleanSheetName(group.Key);
+                        var sheet = package.Workbook.Worksheets.Add(sanitizedSheetName);
 
-                        foreach (var group in buildingGroups.Where(g => !string.IsNullOrEmpty(g.Key)))
+                        sheet.Cells[1, 1].Value = "ID";
+                        sheet.Cells[1, 2].Value = "Date";
+                        sheet.Cells[1, 3].Value = "Initial Meter Value";
+                        sheet.Cells[1, 4].Value = "Final Meter Value";
+                        sheet.Cells[1, 5].Value = "Usage";
+                        if (consumptionType.Equals("Electric", StringComparison.OrdinalIgnoreCase))
+                            sheet.Cells[1, 6].Value = "KWH Value";
+                        if (consumptionType.Equals("NaturalGas", StringComparison.OrdinalIgnoreCase))
+                            sheet.Cells[1, 6].Value = "SM3 Value";
+
+                        var sortedGroupData = group.OrderBy(d => d.Date).ToList();
+
+                        int rowBuilding = 2;
+                        foreach (var item in sortedGroupData)
                         {
-                            var sanitizedSheetName = CleanSheetName(group.Key);
-                            var sheet = package.Workbook.Worksheets.Add(sanitizedSheetName);
-
-                            sheet.Cells[1, 1].Value = "ID";
-                            sheet.Cells[1, 2].Value = "Date";
-                            sheet.Cells[1, 3].Value = "Initial Meter Value";
-                            sheet.Cells[1, 4].Value = "Final Meter Value";
-                            sheet.Cells[1, 5].Value = "Usage";
+                            sheet.Cells[rowBuilding, 1].Value = item.Id;
+                            sheet.Cells[rowBuilding, 2].Value = item.Date.ToString("yyyy-MM-dd");
+                            sheet.Cells[rowBuilding, 3].Value = item.InitialMeterValue;
+                            sheet.Cells[rowBuilding, 4].Value = item.FinalMeterValue;
+                            sheet.Cells[rowBuilding, 5].Value = item.Usage;
                             if (consumptionType.Equals("Electric", StringComparison.OrdinalIgnoreCase))
-                                sheet.Cells[1, 6].Value = "KWH Value";
+                                sheet.Cells[rowBuilding, 6].Value = item.KWHValue;
                             if (consumptionType.Equals("NaturalGas", StringComparison.OrdinalIgnoreCase))
-                                sheet.Cells[1, 6].Value = "SM3 Value";
+                                sheet.Cells[rowBuilding, 6].Value = item.SM3Value;
+                            rowBuilding++;
+                        }
 
-                            var sortedGroupData = group.OrderBy(d => d.Date).ToList();
-
-                            int rowBuilding = 2;
-                            foreach (var item in sortedGroupData)
-                            {
-                                sheet.Cells[rowBuilding, 1].Value = item.Id;
-                                sheet.Cells[rowBuilding, 2].Value = item.Date.ToString("yyyy-MM-dd");
-                                sheet.Cells[rowBuilding, 3].Value = item.InitialMeterValue;
-                                sheet.Cells[rowBuilding, 4].Value = item.FinalMeterValue;
-                                sheet.Cells[rowBuilding, 5].Value = item.Usage;
-                                if (consumptionType.Equals("Electric", StringComparison.OrdinalIgnoreCase))
-                                    sheet.Cells[rowBuilding, 6].Value = item.KWHValue;
-                                if (consumptionType.Equals("NaturalGas", StringComparison.OrdinalIgnoreCase))
-                                    sheet.Cells[rowBuilding, 6].Value = item.SM3Value;
-                                rowBuilding++;
-                            }
-
-                            if (includeGraphs && rowBuilding > 2)
-                            {
-                                string xRange = $"B2:B{rowBuilding - 1}";
-                                string yRange = $"E2:E{rowBuilding - 1}";
-                                string chartTitle = $"Usage Over Time - {group.Key}";
-                                AddChart(sheet, xRange, yRange, chartTitle);
-                            }
+                        if (includeGraphs && rowBuilding > 2)
+                        {
+                            string xRange = $"B2:B{rowBuilding - 1}";
+                            string yRange = $"E2:E{rowBuilding - 1}";
+                            string chartTitle = $"Usage Over Time - {group.Key}";
+                            AddChart(sheet, xRange, yRange, chartTitle);
                         }
                     }
                 }

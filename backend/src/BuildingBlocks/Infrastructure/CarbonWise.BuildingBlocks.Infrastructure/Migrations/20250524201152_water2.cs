@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class sl1111 : Migration
+    public partial class water2 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -48,20 +48,6 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "Papers",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Date = table.Column<DateTime>(type: "datetime(6)", nullable: false),
-                    Usage = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Papers", x => x.Id);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
                 name: "TestQuestions",
                 columns: table => new
                 {
@@ -85,9 +71,24 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
                     Username = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    Name = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Surname = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     Email = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    PasswordHash = table.Column<string>(type: "longtext", nullable: false)
+                    Gender = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    IsInInstitution = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    IsStudent = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    IsAcademicPersonal = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    IsAdministrativeStaff = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    UniqueId = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    SustainabilityPoint = table.Column<int>(type: "int", nullable: true),
+                    apiKey = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    PasswordHash = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Role = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
@@ -97,22 +98,6 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
-                })
-                .Annotation("MySql:CharSet", "utf8mb4");
-
-            migrationBuilder.CreateTable(
-                name: "Waters",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
-                    Date = table.Column<DateTime>(type: "datetime(6)", nullable: false),
-                    InitialMeterValue = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    FinalMeterValue = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    Usage = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Waters", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
@@ -157,6 +142,50 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                     table.PrimaryKey("PK_NaturalGas", x => x.Id);
                     table.ForeignKey(
                         name: "FK_NaturalGas_Buildings_BuildingId",
+                        column: x => x.BuildingId,
+                        principalTable: "Buildings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "Papers",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    Date = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    Usage = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    BuildingId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Papers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Papers_Buildings_BuildingId",
+                        column: x => x.BuildingId,
+                        principalTable: "Buildings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "Waters",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    Date = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    InitialMeterValue = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    FinalMeterValue = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    Usage = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    BuildingId = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Waters", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Waters_Buildings_BuildingId",
                         column: x => x.BuildingId,
                         principalTable: "Buildings",
                         principalColumn: "Id",
@@ -295,6 +324,11 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                 column: "Date");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Papers_BuildingId",
+                table: "Papers",
+                column: "BuildingId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Papers_Date",
                 table: "Papers",
                 column: "Date");
@@ -343,6 +377,11 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Waters_BuildingId",
+                table: "Waters",
+                column: "BuildingId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Waters_Date",
                 table: "Waters",
                 column: "Date");
@@ -370,9 +409,6 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                 name: "Waters");
 
             migrationBuilder.DropTable(
-                name: "Buildings");
-
-            migrationBuilder.DropTable(
                 name: "CampusVehicleEntries");
 
             migrationBuilder.DropTable(
@@ -380,6 +416,9 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "TestQuestionOptions");
+
+            migrationBuilder.DropTable(
+                name: "Buildings");
 
             migrationBuilder.DropTable(
                 name: "Users");

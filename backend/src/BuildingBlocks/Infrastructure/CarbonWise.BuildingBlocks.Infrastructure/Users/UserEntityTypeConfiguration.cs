@@ -21,12 +21,41 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Users
                 .HasMaxLength(50)
                 .IsRequired();
 
+            builder.Property(u => u.Name)
+                .HasMaxLength(100);
+
+            builder.Property(u => u.Surname)
+                .HasMaxLength(100);
+
             builder.Property(u => u.Email)
                 .HasMaxLength(255)
                 .IsRequired();
 
-            builder.Property(u => u.PasswordHash)
+            builder.Property(u => u.Gender)
+                .HasMaxLength(20);
+
+            builder.Property(u => u.IsInInstitution)
                 .IsRequired();
+
+            builder.Property(u => u.IsStudent)
+                .IsRequired();
+
+            builder.Property(u => u.IsAcademicPersonal)
+                .IsRequired();
+
+            builder.Property(u => u.IsAdministrativeStaff)
+                .IsRequired();
+
+            builder.Property(u => u.UniqueId)
+                .HasMaxLength(100);
+
+            builder.Property(u => u.SustainabilityPoint);
+
+            builder.Property(u => u.apiKey)
+                .HasMaxLength(255);
+
+            builder.Property(u => u.PasswordHash)
+                .HasMaxLength(255);
 
             builder.Property(u => u.Role)
                 .HasConversion<string>()
@@ -34,6 +63,8 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Users
 
             builder.Property(u => u.CreatedAt)
                 .IsRequired();
+
+            builder.Property(u => u.LastLoginAt);
 
             builder.HasIndex(u => u.Username)
                 .IsUnique();

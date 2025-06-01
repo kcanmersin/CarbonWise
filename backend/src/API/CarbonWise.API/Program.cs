@@ -34,13 +34,14 @@ using CarbonWise.BuildingBlocks.Infrastructure.CarbonFootPrintTest;
 using CarbonWise.BuildingBlocks.Application.Services.Reports;
 using CarbonWise.BuildingBlocks.Application.Services.ExternalAPIs;
 using Microsoft.Extensions.Configuration;
+using CarbonWise.API.Services;
 
 
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-
+builder.Services.AddMemoryCache();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options => options.ConfigureSwaggerOptions());
 
@@ -102,6 +103,8 @@ builder.Services.AddScoped<ILlmService, LlmService>();
 builder.Services.AddScoped<ICarbonFootprintTestRepository, CarbonFootprintTestRepository>();
 builder.Services.AddScoped<ITestQuestionRepository, TestQuestionRepository>();
 builder.Services.AddScoped<ICarbonFootprintTestService, CarbonFootprintTestService>();
+
+builder.Services.AddScoped<IOAuthService, OAuthService>();
 
 builder.Services.Configure<ExternalAPIsSettings>(builder.Configuration.GetSection("ExternalAPIs"));
 builder.Services.AddHttpClient<IExternalAPIsService, ExternalAPIsService>();

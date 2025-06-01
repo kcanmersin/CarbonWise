@@ -226,6 +226,9 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("char(36)");
 
+                    b.Property<Guid>("BuildingId")
+                        .HasColumnType("char(36)");
+
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime(6)");
 
@@ -234,6 +237,8 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BuildingId");
 
                     b.HasIndex("Date");
 
@@ -296,21 +301,62 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<bool>("IsAcademicPersonal")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsAdministrativeStaff")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsInInstitution")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsStudent")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<DateTime?>("LastLoginAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("Surname")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int?>("SustainabilityPoint")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UniqueId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<string>("apiKey")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
 
@@ -326,6 +372,9 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
             modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Waters.Water", b =>
                 {
                     b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("BuildingId")
                         .HasColumnType("char(36)");
 
                     b.Property<DateTime>("Date")
@@ -344,6 +393,8 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BuildingId");
 
                     b.HasIndex("Date");
 
@@ -415,6 +466,17 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                     b.Navigation("Building");
                 });
 
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Papers.Paper", b =>
+                {
+                    b.HasOne("CarbonWise.BuildingBlocks.Domain.Buildings.Building", "Building")
+                        .WithMany()
+                        .HasForeignKey("BuildingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Building");
+                });
+
             modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.SchoolInfos.SchoolInfo", b =>
                 {
                     b.HasOne("CarbonWise.BuildingBlocks.Domain.SchoolInfos.CampusVehicleEntry", "Vehicles")
@@ -424,6 +486,17 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Vehicles");
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Waters.Water", b =>
+                {
+                    b.HasOne("CarbonWise.BuildingBlocks.Domain.Buildings.Building", "Building")
+                        .WithMany()
+                        .HasForeignKey("BuildingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Building");
                 });
 
             modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.CarbonFootprintTest", b =>

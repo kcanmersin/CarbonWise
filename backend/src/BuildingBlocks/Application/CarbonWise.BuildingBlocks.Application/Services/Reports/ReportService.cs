@@ -9,6 +9,8 @@ using CarbonWise.BuildingBlocks.Application.Services.LLMService;
 using CarbonWise.BuildingBlocks.Domain.Buildings;
 using CarbonWise.BuildingBlocks.Domain.Electrics;
 using CarbonWise.BuildingBlocks.Domain.NaturalGases;
+using CarbonWise.BuildingBlocks.Domain.Waters;
+using CarbonWise.BuildingBlocks.Domain.Papers;
 
 namespace CarbonWise.BuildingBlocks.Application.Services.Reports
 {
@@ -20,6 +22,8 @@ namespace CarbonWise.BuildingBlocks.Application.Services.Reports
         private readonly ILlmService _llmService;
         private readonly IElectricRepository _electricRepository;
         private readonly INaturalGasRepository _naturalGasRepository;
+        private readonly IWaterRepository _waterRepository;
+        private readonly IPaperRepository _paperRepository;
 
         private static readonly List<string> _consumptionTypes = new List<string>
         {
@@ -35,7 +39,9 @@ namespace CarbonWise.BuildingBlocks.Application.Services.Reports
             IBuildingRepository buildingRepository,
             ILlmService llmService,
             IElectricRepository electricRepository,
-            INaturalGasRepository naturalGasRepository)
+            INaturalGasRepository naturalGasRepository,
+            IWaterRepository waterRepository,
+            IPaperRepository paperRepository)
         {
             _carbonFootprintService = carbonFootprintService;
             _consumptionDataService = consumptionDataService;
@@ -43,6 +49,8 @@ namespace CarbonWise.BuildingBlocks.Application.Services.Reports
             _llmService = llmService;
             _electricRepository = electricRepository;
             _naturalGasRepository = naturalGasRepository;
+            _waterRepository = waterRepository;
+            _paperRepository = paperRepository;
         }
 
         public async Task<ReportDto> GenerateCarbonFootprintReportAsync(DateTime startDate, DateTime endDate)
@@ -137,9 +145,49 @@ namespace CarbonWise.BuildingBlocks.Application.Services.Reports
                     dataForAnalysis = monthlyTotals;
                 }
             }
+            else if (consumptionType == "Water")
+            {
+                if (buildingId.HasValue)
+                {
+                    // For specific building, get regular consumption data
+                    var consumptionData = await _consumptionDataService.GetConsumptionDataAsync(
+                        consumptionType,
+                        startDate,
+                        endDate);
+
+                    rawConsumptionData = consumptionData.Where(d => d.BuildingId == buildingId.Value).ToList();
+                    dataForAnalysis = rawConsumptionData;
+                }
+                else
+                {
+                    // Get monthly totals for organization-wide reports
+                    var monthlyTotals = await _waterRepository.GetMonthlyTotalsAsync(startDate, endDate);
+                    dataForAnalysis = monthlyTotals;
+                }
+            }
+            else if (consumptionType == "Paper")
+            {
+                if (buildingId.HasValue)
+                {
+                    // For specific building, get regular consumption data
+                    var consumptionData = await _consumptionDataService.GetConsumptionDataAsync(
+                        consumptionType,
+                        startDate,
+                        endDate);
+
+                    rawConsumptionData = consumptionData.Where(d => d.BuildingId == buildingId.Value).ToList();
+                    dataForAnalysis = rawConsumptionData;
+                }
+                else
+                {
+                    // Get monthly totals for organization-wide reports
+                    var monthlyTotals = await _paperRepository.GetMonthlyTotalsAsync(startDate, endDate);
+                    dataForAnalysis = monthlyTotals;
+                }
+            }
             else
             {
-                // For Water and Paper, use the existing approach
+                // Fallback for other consumption types
                 var consumptionData = await _consumptionDataService.GetConsumptionDataAsync(
                     consumptionType,
                     startDate,
@@ -175,9 +223,19 @@ namespace CarbonWise.BuildingBlocks.Application.Services.Reports
                 // For natural gas monthly totals
                 prompt = CreateNaturalGasMonthlyTotalsPrompt(dataForAnalysis, startDate, endDate);
             }
+            else if (consumptionType == "Water")
+            {
+                // For water monthly totals
+                prompt = CreateWaterMonthlyTotalsPrompt(dataForAnalysis, startDate, endDate);
+            }
+            else if (consumptionType == "Paper")
+            {
+                // For paper monthly totals
+                prompt = CreatePaperMonthlyTotalsPrompt(dataForAnalysis, startDate, endDate);
+            }
             else
             {
-                // For water and paper aggregates
+                // For other consumption types aggregates
                 prompt = CreateConsumptionAnalysisPrompt(consumptionType, buildingName, rawConsumptionData, startDate, endDate, false);
             }
 
@@ -263,19 +321,17 @@ Keep your analysis concise but informative.";
                         ? g.Sum(d => d.SM3Value ?? 0)
                         : (decimal?)null,
 
-                    // Building-level aggregations
-                    BuildingBreakdown = consumptionType == "Electric" || consumptionType == "NaturalGas"
-                        ? g.GroupBy(d => new { BuildingId = d.BuildingId, BuildingName = d.BuildingName })
-                          .Where(bg => bg.Key.BuildingId.HasValue) // Filter out nulls
-                          .Select(bg => new {
-                              BuildingId = bg.Key.BuildingId,
-                              BuildingName = bg.Key.BuildingName,
-                              TotalUsage = bg.Sum(d => d.Usage),
-                              Percentage = bg.Sum(d => d.Usage) / g.Sum(d => d.Usage) * 100
-                          })
-                          .OrderByDescending(b => b.TotalUsage)
-                          .ToList()
-                        : null
+                    // Building-level aggregations for all types now
+                    BuildingBreakdown = g.GroupBy(d => new { BuildingId = d.BuildingId, BuildingName = d.BuildingName })
+                        .Where(bg => bg.Key.BuildingId.HasValue) // Filter out nulls
+                        .Select(bg => new {
+                            BuildingId = bg.Key.BuildingId,
+                            BuildingName = bg.Key.BuildingName,
+                            TotalUsage = bg.Sum(d => d.Usage),
+                            Percentage = bg.Sum(d => d.Usage) / g.Sum(d => d.Usage) * 100
+                        })
+                        .OrderByDescending(b => b.TotalUsage)
+                        .ToList()
                 })
                 .OrderBy(d => d.Year)
                 .ThenBy(d => d.Month)
@@ -411,6 +467,40 @@ Please provide a comprehensive analysis of this consumption data, including:
 6. Any other insights or patterns in the data
 
 Focus on identifying actionable insights that could help reduce natural gas consumption and improve efficiency.";
+        }
+
+        private string CreateWaterMonthlyTotalsPrompt(object monthlyTotals, DateTime startDate, DateTime endDate)
+        {
+            return $@"Analyze the following water consumption monthly totals data for the period from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}.
+
+This data shows the monthly aggregated water consumption across the organization.
+
+Please provide a comprehensive analysis of this consumption data, including:
+1. Overall trends in water consumption over the period
+2. Monthly or seasonal patterns in the data
+3. Year-over-year comparison if data spans multiple years
+4. Months with unusually high or low consumption
+5. Recommendations for optimizing water usage and conservation
+6. Any other insights or patterns in the data
+
+Focus on identifying actionable insights that could help reduce water consumption and improve efficiency.";
+        }
+
+        private string CreatePaperMonthlyTotalsPrompt(object monthlyTotals, DateTime startDate, DateTime endDate)
+        {
+            return $@"Analyze the following paper consumption monthly totals data for the period from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}.
+
+This data shows the monthly aggregated paper consumption across the organization.
+
+Please provide a comprehensive analysis of this consumption data, including:
+1. Overall trends in paper consumption over the period
+2. Monthly or seasonal patterns (academic calendar influence)
+3. Year-over-year comparison if data spans multiple years
+4. Months with unusually high or low consumption
+5. Recommendations for reducing paper usage and promoting digitalization
+6. Any other insights or patterns in the data
+
+Focus on identifying actionable insights that could help reduce paper consumption and promote sustainable practices.";
         }
 
         private async Task<string> GetLlmAnalysisAsync<T>(string prompt, T data)
