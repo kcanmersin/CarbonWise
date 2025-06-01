@@ -35,6 +35,10 @@ using CarbonWise.BuildingBlocks.Application.Services.Reports;
 using CarbonWise.BuildingBlocks.Application.Services.ExternalAPIs;
 using Microsoft.Extensions.Configuration;
 using CarbonWise.API.Services;
+using CarbonWise.BuildingBlocks.Application.Jobs;
+using CarbonWise.BuildingBlocks.Application.Services.AirQuality;
+using CarbonWise.BuildingBlocks.Domain.AirQuality;
+using CarbonWise.BuildingBlocks.Infrastructure.AirQuality;
 
 
 
@@ -75,8 +79,10 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Register services
-// Register repositories
+builder.Services.AddScoped<IAirQualityRepository, AirQualityRepository>();
+builder.Services.AddScoped<IAirQualityBackgroundService, AirQualityBackgroundService>();
+builder.Services.AddScoped<AirQualityJob>();
+builder.Services.AddHostedService<QuartzSchedulerService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();

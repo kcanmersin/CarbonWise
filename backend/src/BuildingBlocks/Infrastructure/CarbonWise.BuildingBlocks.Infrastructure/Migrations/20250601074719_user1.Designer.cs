@@ -4,6 +4,7 @@ using CarbonWise.BuildingBlocks.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250601074719_user1")]
+    partial class user1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,89 +24,6 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
-
-            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.AirQuality.AirQuality", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("char(36)");
-
-                    b.Property<int>("AQI")
-                        .HasColumnType("int");
-
-                    b.Property<double?>("CO")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("double");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("DominentPollutant")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<double?>("Humidity")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("double");
-
-                    b.Property<double>("Latitude")
-                        .HasPrecision(10, 7)
-                        .HasColumnType("double");
-
-                    b.Property<double>("Longitude")
-                        .HasPrecision(10, 7)
-                        .HasColumnType("double");
-
-                    b.Property<double?>("NO2")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("double");
-
-                    b.Property<double?>("Ozone")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("double");
-
-                    b.Property<double?>("PM10")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("double");
-
-                    b.Property<double?>("PM25")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("double");
-
-                    b.Property<double?>("Pressure")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("double");
-
-                    b.Property<DateTime>("RecordDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<double?>("SO2")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("double");
-
-                    b.Property<double?>("Temperature")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("double");
-
-                    b.Property<double?>("WindSpeed")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("double");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("City");
-
-                    b.HasIndex("RecordDate");
-
-                    b.HasIndex("City", "RecordDate");
-
-                    b.ToTable("AirQualities", (string)null);
-                });
 
             modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Buildings.Building", b =>
                 {

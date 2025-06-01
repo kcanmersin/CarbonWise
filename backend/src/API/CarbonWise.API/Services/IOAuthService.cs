@@ -1,5 +1,6 @@
 ﻿using CarbonWise.BuildingBlocks.Domain.Users;
 using CarbonWise.BuildingBlocks.Infrastructure;
+using CarbonWise.BuildingBlocks.Infrastructure.Security;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -18,17 +19,24 @@ namespace CarbonWise.API.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly AppDbContext _dbContext;
-        private readonly string clientId = "FB387A2ABDDD423586FFB6ED157762BB";
-        private readonly string clientSecret = "3FF64BC099174847A5FB2EF22E1D0930";
+        private readonly IJwtTokenGenerator _jwtTokenGenerator;
+
+        private readonly string clientId = "0367F395212941E28DA342B6F28BC3BC";
+        private readonly string clientSecret = "D9D8BE412F0A477B9B182E5AA378153F";
         private readonly string redirectUri = "http://localhost:3000/auth";
+
         private readonly string authorizationEndpoint = "https://kampus.gtu.edu.tr/oauth/yetki";
         private readonly string tokenEndpoint = "https://kampus.gtu.edu.tr/oauth/dogrulama";
         private readonly string queryServerAddress = "https://kampus.gtu.edu.tr/oauth/sorgulama";
 
-        public OAuthService(IUserRepository userRepository, AppDbContext dbContext)
+        public OAuthService(
+            IUserRepository userRepository,
+            AppDbContext dbContext,
+            IJwtTokenGenerator jwtTokenGenerator)
         {
             _userRepository = userRepository;
             _dbContext = dbContext;
+            _jwtTokenGenerator = jwtTokenGenerator;
         }
 
         public string GenerateLoginUrl(IMemoryCache cache)
@@ -82,11 +90,13 @@ namespace CarbonWise.API.Services
                 var responseContent = await response.Content.ReadAsStringAsync();
                 var userInfo = JToken.Parse(responseContent);
 
-                var newUser = await ControlUser(userInfo);
-                if (newUser == null)
+                var user = await ControlUser(userInfo);
+                if (user == null)
                     return OAuthResult.Fail(400, "User creation or retrieval failed.");
 
-                return OAuthResult.SuccessResult(newUser);
+                var token = _jwtTokenGenerator.GenerateToken(user);
+
+                return OAuthResult.SuccessResult(user, token);
             }
             catch (Exception ex)
             {
@@ -96,29 +106,49 @@ namespace CarbonWise.API.Services
 
         private async Task<User?> ControlUser(JToken userInfo)
         {
-            var user = ConvertToUser(userInfo);
-            var existingUser = await _userRepository.GetByEmailAsync(user.Email);
+            var userEmail = userInfo["kurumsal_email_adresi"]?.ToString() ?? "";
+            var userName = userInfo["kullanici_adi"]?.ToString() ?? "";
+            var name = userInfo["ad"]?.ToString() ?? "";
+            var surname = userInfo["soyad"]?.ToString() ?? "";
+            var gender = userInfo["cinsiyet"]?.ToString() ?? "Other";
+            var uniqueId = userInfo["tc_kimlik_no"]?.ToString() ?? userEmail;
+
+            bool isStudent = userInfo["ogrenci_mi"]?.ToObject<bool>() ?? false;
+            bool isAcademicPersonal = userInfo["akademik_personel_mi"]?.ToObject<bool>() ?? false;
+            bool isAdministrativeStaff = userInfo["idari_personel_mi"]?.ToObject<bool>() ?? false;
+            bool isInInstitution = isStudent || isAcademicPersonal || isAdministrativeStaff;
+
+            if (string.IsNullOrEmpty(userEmail))
+                return null;
+
+            var existingUser = await _userRepository.GetByEmailAsync(userEmail);
 
             if (existingUser != null)
+            {
+                existingUser.UpdateLastLogin();
+                existingUser.UpdateProfile(name, surname, gender, isInInstitution, isStudent, isAcademicPersonal, isAdministrativeStaff);
+                await _userRepository.UpdateAsync(existingUser);
+                await _dbContext.SaveChangesAsync();
                 return existingUser;
+            }
 
-            user.apiKey = ApiKeyGenerator.GenerateApiKey();
-            user.SustainabilityPoint = 0;
-            user.UniqueId = user.Email;
-            await _userRepository.AddAsync(user);
+            var newUser = User.CreateFromOAuth(
+                userName,
+                name,
+                surname,
+                userEmail,
+                gender,
+                isInInstitution,
+                isStudent,
+                isAcademicPersonal,
+                isAdministrativeStaff,
+                uniqueId
+            );
+
+            await _userRepository.AddAsync(newUser);
             await _dbContext.SaveChangesAsync();
 
-            return await _userRepository.GetByEmailAsync(user.Email);
-        }
-
-        private User ConvertToUser(JToken userInfo)
-        {
-            return User.Create(
-                userInfo["kullanici_adi"]?.ToString() ?? "",
-                userInfo["kurumsal_email_adresi"]?.ToString() ?? "",
-                "oauth", 
-                UserRole.User
-            );
+            return newUser;
         }
 
         private async Task<string> ExchangeCodeForToken(string code, string codeVerifier)
@@ -167,24 +197,28 @@ namespace CarbonWise.API.Services
                 .Replace('/', '_');
         }
     }
+
     public class OAuthResult
     {
         public bool Success { get; set; }
         public User User { get; set; }
+        public string Token { get; set; } = string.Empty;
         public int StatusCode { get; set; }
-        public string ErrorMessage { get; set; }
+        public string ErrorMessage { get; set; } = string.Empty;
 
-        public static OAuthResult SuccessResult(User user) => new OAuthResult { Success = true, User = user, StatusCode = 200 };
-        public static OAuthResult Fail(int statusCode, string error) => new OAuthResult { Success = false, StatusCode = statusCode, ErrorMessage = error };
-    }
-
-    public static class ApiKeyGenerator
-    {
-        public static string GenerateApiKey()
+        public static OAuthResult SuccessResult(User user, string token) => new OAuthResult
         {
-            byte[] secretKeyBytes = new byte[32]; // 256-bit
-            RandomNumberGenerator.Fill(secretKeyBytes);
-            return Convert.ToBase64String(secretKeyBytes);
-        }
+            Success = true,
+            User = user,
+            Token = token,
+            StatusCode = 200
+        };
+
+        public static OAuthResult Fail(int statusCode, string error) => new OAuthResult
+        {
+            Success = false,
+            StatusCode = statusCode,
+            ErrorMessage = error
+        };
     }
 }
