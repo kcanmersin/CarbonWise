@@ -45,3 +45,23 @@ export const getGeoAirQuality = async (lat, lng) => {
     throw error;
   }
 };
+
+export const getMonthlyAirQuality = async (city) => {
+  try {
+    const response = await fetch(`${API_URL}/ExternalApis/airquality/database/last30days?city=${city}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}` // Include if your API requires auth
+      }
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to fetch monthly air quality data");
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching monthly air quality data:", error);
+    throw error;
+  }
+};

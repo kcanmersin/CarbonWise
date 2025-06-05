@@ -44,6 +44,110 @@ export const getPaperById = async (id) => {
   }
 };
 
+export const getPaperByBuilding = async (buildingId) => {
+  try {
+    const response = await fetch(`${API_URL}/Papers/building/${buildingId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to fetch paper data");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching paper data:", error);
+    throw error;
+  }
+};
+
+export const getPaperMonthlyAggregate = async (startDate, endDate) => {
+  try {
+    // Create query string from parameters
+    const queryParams = new URLSearchParams();
+    if (startDate) queryParams.append("startDate", startDate.toISOString());
+    if (endDate) queryParams.append("endDate", endDate.toISOString());
+
+    const response = await fetch(`${API_URL}/Papers/monthly-aggregate?${queryParams}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to fetch monthly aggregate data");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching monthly aggregate data:", error);
+    throw error;
+  }
+};
+
+export const getPaperMonthlyTotals = async (startDate, endDate) => {
+  try {
+    // Create query string from parameters
+    const queryParams = new URLSearchParams();
+    if (startDate) queryParams.append("startDate", startDate.toISOString());
+    if (endDate) queryParams.append("endDate", endDate.toISOString());
+
+    const response = await fetch(`${API_URL}/Papers/monthly-totals?${queryParams}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to fetch monthly totals data");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching monthly totals data:", error);
+    throw error;
+  }
+};
+
+export const filterPapers = async (filterParams) => {
+  try {
+    // Create query string from filter parameters
+    const queryParams = new URLSearchParams();
+    if (filterParams.buildingId) queryParams.append("BuildingId", filterParams.buildingId);
+    if (filterParams.startDate) queryParams.append("StartDate", filterParams.startDate.toISOString());
+    if (filterParams.endDate) queryParams.append("EndDate", filterParams.endDate.toISOString());
+
+    const response = await fetch(`${API_URL}/Papers/filter?${queryParams}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to filter paper data");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error filtering paper data:", error);
+    throw error;
+  }
+};
+
 export const createPaper = async (paperData) => {
   try {
     const response = await fetch(`${API_URL}/Papers`, {
@@ -108,33 +212,6 @@ export const deletePaper = async (id) => {
     return true;
   } catch (error) {
     console.error("Error deleting paper record:", error);
-    throw error;
-  }
-};
-
-export const filterPapers = async (filterParams) => {
-  try {
-    // Create query string from filter parameters
-    const queryParams = new URLSearchParams();
-    if (filterParams.startDate) queryParams.append("StartDate", filterParams.startDate.toISOString());
-    if (filterParams.endDate) queryParams.append("EndDate", filterParams.endDate.toISOString());
-
-    const response = await fetch(`${API_URL}/Papers/filter?${queryParams}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-      }
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Failed to filter paper data");
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error filtering paper data:", error);
     throw error;
   }
 };
