@@ -1,4 +1,8 @@
-﻿namespace CarbonWise.BuildingBlocks.Domain.Waters
+﻿using System;
+using CarbonWise.BuildingBlocks.Domain.Buildings;
+using CarbonWise.BuildingBlocks.Domain;
+
+namespace CarbonWise.BuildingBlocks.Domain.Waters
 {
     public class Water : Entity, IAggregateRoot
     {
@@ -7,6 +11,8 @@
         public decimal InitialMeterValue { get; private set; }
         public decimal FinalMeterValue { get; private set; }
         public decimal Usage { get; private set; }
+        public BuildingId BuildingId { get; private set; }
+        public virtual Building Building { get; private set; }
 
         protected Water() { }
 
@@ -15,19 +21,22 @@
             DateTime date,
             decimal initialMeterValue,
             decimal finalMeterValue,
-            decimal usage)
+            decimal usage,
+            BuildingId buildingId)
         {
             Id = id;
             Date = date;
             InitialMeterValue = initialMeterValue;
             FinalMeterValue = finalMeterValue;
             Usage = usage;
+            BuildingId = buildingId;
         }
 
         public static Water Create(
             DateTime date,
             decimal initialMeterValue,
-            decimal finalMeterValue)
+            decimal finalMeterValue,
+            BuildingId buildingId)
         {
             if (initialMeterValue < 0)
                 throw new ArgumentException("Initial meter value cannot be negative", nameof(initialMeterValue));
@@ -42,7 +51,8 @@
                 date,
                 initialMeterValue,
                 finalMeterValue,
-                usage);
+                usage,
+                buildingId);
 
             water.AddDomainEvent(new WaterCreatedDomainEvent(water.Id));
 
@@ -64,6 +74,7 @@
             InitialMeterValue = initialMeterValue;
             FinalMeterValue = finalMeterValue;
 
+            // Recalculate usage
             Usage = finalMeterValue - initialMeterValue;
         }
     }

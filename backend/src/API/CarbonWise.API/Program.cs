@@ -34,8 +34,10 @@ using CarbonWise.BuildingBlocks.Infrastructure.CarbonFootPrintTest;
 using CarbonWise.BuildingBlocks.Application.Services.Reports;
 using CarbonWise.BuildingBlocks.Application.Services.ExternalAPIs;
 using Microsoft.Extensions.Configuration;
-
-
+using CarbonWise.BuildingBlocks.Application.Jobs;
+using CarbonWise.BuildingBlocks.Application.Services.AirQuality;
+using CarbonWise.BuildingBlocks.Domain.AirQuality;
+using CarbonWise.BuildingBlocks.Infrastructure.AirQuality;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,8 +76,10 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Register services
 // Register repositories
+builder.Services.AddScoped<IAirQualityRepository, AirQualityRepository>();
+builder.Services.AddScoped<IAirQualityBackgroundService, AirQualityBackgroundService>();
+builder.Services.AddScoped<AirQualityJob>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
@@ -83,11 +87,19 @@ builder.Services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<ISchoolInfoRepository, SchoolInfoRepository>();
 builder.Services.AddScoped<IBuildingRepository, BuildingRepository>();
 builder.Services.AddScoped<IElectricRepository, ElectricRepository>();
-builder.Services.AddScoped<ICarbonFootprintService, CarbonFootprintService>();
-// Register handlers
 builder.Services.AddScoped<INaturalGasRepository, NaturalGasRepository>();
-builder.Services.AddScoped<IPaperRepository,PaperRepository>();
+builder.Services.AddScoped<IPaperRepository, PaperRepository>();
 builder.Services.AddScoped<IWaterRepository, WaterRepository>();
+
+// Register Carbon Footprint Test repositories
+builder.Services.AddScoped<ICarbonFootprintTestRepository, CarbonFootprintTestRepository>();
+builder.Services.AddScoped<ITestQuestionRepository, TestQuestionRepository>();
+
+// Register services
+builder.Services.AddScoped<ICarbonFootprintService, CarbonFootprintService>();
+builder.Services.AddScoped<ICarbonFootprintTestService, CarbonFootprintTestService>();
+
+// Register handlers
 builder.Services.AddScoped<RegisterUserCommandHandler>();
 builder.Services.AddScoped<LoginCommandHandler>();
 builder.Services.AddScoped<GetUserQueryHandler>();
@@ -99,23 +111,20 @@ builder.Services.Configure<LlmSettings>(builder.Configuration.GetSection("LlmSet
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<ILlmService, LlmService>();
 
-builder.Services.AddScoped<ICarbonFootprintTestRepository, CarbonFootprintTestRepository>();
-builder.Services.AddScoped<ITestQuestionRepository, TestQuestionRepository>();
-builder.Services.AddScoped<ICarbonFootprintTestService, CarbonFootprintTestService>();
-
 builder.Services.Configure<ExternalAPIsSettings>(builder.Configuration.GetSection("ExternalAPIs"));
 builder.Services.AddHttpClient<IExternalAPIsService, ExternalAPIsService>();
 
 builder.Services.AddScoped<CarbonWise.BuildingBlocks.Application.Services.Consumption.IConsumptionDataService,
                           CarbonWise.BuildingBlocks.Infrastructure.Services.Consumption.ConsumptionDataService>();
+
 builder.Services.AddMediatR(cfg => {
     cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.Electrics.ElectricDto).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.NaturalGases.NaturalGasDto).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.Papers.PaperDto).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.Waters.WaterDto).Assembly);
     cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.Buildings.BuildingDto).Assembly);
-
 });
+
 // Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 
@@ -130,6 +139,7 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

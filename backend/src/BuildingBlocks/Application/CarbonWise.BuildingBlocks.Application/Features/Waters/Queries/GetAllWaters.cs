@@ -24,13 +24,15 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Waters.Queries.GetAllWa
         {
             var waters = await _waterRepository.GetAllAsync();
 
-            return waters.Select(e => new WaterDto
+            return waters.Select(w => new WaterDto
             {
-                Id = e.Id.Value,
-                Date = e.Date,
-                InitialMeterValue = e.InitialMeterValue,
-                FinalMeterValue = e.FinalMeterValue,
-                Usage = e.Usage
+                Id = w.Id.Value,
+                Date = w.Date,
+                InitialMeterValue = w.InitialMeterValue,
+                FinalMeterValue = w.FinalMeterValue,
+                Usage = w.Usage,
+                BuildingId = w.BuildingId.Value,
+                BuildingName = w.Building?.Name
             }).ToList();
         }
     }

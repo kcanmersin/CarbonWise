@@ -46,7 +46,9 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Papers.Commands.UpdateP
             {
                 Id = paper.Id.Value,
                 Date = paper.Date,
-                Usage = paper.Usage
+                Usage = paper.Usage,
+                BuildingId = paper.BuildingId.Value,
+                BuildingName = paper.Building?.Name
             };
         }
     }

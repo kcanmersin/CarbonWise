@@ -21,20 +21,30 @@ namespace CarbonWise.BuildingBlocks.Application.Services.CarbonFootPrintTest
     {
         private readonly ICarbonFootprintTestRepository _testRepository;
         private readonly ITestQuestionRepository _questionRepository;
+        private readonly IUserRepository _userRepository;
         private readonly IUnitOfWork _unitOfWork;
 
         public CarbonFootprintTestService(
             ICarbonFootprintTestRepository testRepository,
             ITestQuestionRepository questionRepository,
+            IUserRepository userRepository,
             IUnitOfWork unitOfWork)
         {
             _testRepository = testRepository;
             _questionRepository = questionRepository;
+            _userRepository = userRepository;
             _unitOfWork = unitOfWork;
         }
 
         public async Task<CarbonFootprintTestDto> StartNewTestAsync(Guid userId)
         {
+            // User'ın var olduğunu kontrol et
+            var user = await _userRepository.GetByIdAsync(new UserId(userId));
+            if (user == null)
+            {
+                throw new ApplicationException("User not found");
+            }
+
             var test = CarbonFootprintTest.Create(new UserId(userId));
 
             await _testRepository.AddAsync(test);
@@ -87,8 +97,23 @@ namespace CarbonWise.BuildingBlocks.Application.Services.CarbonFootPrintTest
                 throw new ApplicationException("Test not found");
             }
 
+            // Test sonuçlarını hesapla
             test.CalculateFootprint();
 
+            // User'ı bul ve sustainability point'ini güncelle
+            var user = await _userRepository.GetByIdAsync(test.UserId);
+            if (user == null)
+            {
+                throw new ApplicationException("User not found");
+            }
+
+            // TotalFootprint'i integer'a çevir (sustainability point olarak)
+            // Burada istediğiniz hesaplama mantığını uygulayabilirsiniz
+            int sustainabilityPoints = CalculateSustainabilityPoints(test.TotalFootprint);
+            user.UpdateSustainabilityPoint(sustainabilityPoints);
+
+            // User'ı güncelle
+            await _userRepository.UpdateAsync(user);
             await _unitOfWork.CommitAsync();
 
             return new CarbonFootprintResultDto
@@ -96,6 +121,7 @@ namespace CarbonWise.BuildingBlocks.Application.Services.CarbonFootPrintTest
                 Id = test.Id.Value,
                 UserId = test.UserId.Value,
                 TotalFootprint = test.TotalFootprint,
+                SustainabilityPoints = sustainabilityPoints,
                 CompletedAt = test.CompletedAt,
                 CategoryResults = test.CategoryResults.Select(cr => new CategoryResultDto
                 {
@@ -122,6 +148,33 @@ namespace CarbonWise.BuildingBlocks.Application.Services.CarbonFootPrintTest
                 }).ToList()
             }).ToList();
         }
+
+        // Sustainability points hesaplama mantığı
+        // Bu metodu ihtiyaçlarınıza göre özelleştirebilirsiniz
+        private int CalculateSustainabilityPoints(decimal totalFootprint)
+        {
+            // Örnek hesaplama mantığı:
+            // - Düşük karbon ayak izi = Yüksek sustainability points
+            // - Yüksek karbon ayak izi = Düşük sustainability points
+
+            // Basit bir formula örneği:
+            // 1000 - (totalFootprint * 10) gibi bir hesaplama yapabilirsiniz
+            // Veya karbon ayak izini kategorilere bölerek puan verebilirsiniz
+
+            if (totalFootprint <= 10)
+                return 100; // Mükemmel
+            else if (totalFootprint <= 25)
+                return 80;  // İyi
+            else if (totalFootprint <= 50)
+                return 60;  // Orta
+            else if (totalFootprint <= 75)
+                return 40;  // Düşük
+            else
+                return 20;  // Çok düşük
+
+            // Alternatif olarak daha karmaşık bir hesaplama:
+            // return Math.Max(0, 100 - (int)(totalFootprint * 2));
+        }
     }
 
     // DTOs
@@ -143,6 +196,7 @@ namespace CarbonWise.BuildingBlocks.Application.Services.CarbonFootPrintTest
         public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public decimal TotalFootprint { get; set; }
+        public int SustainabilityPoints { get; set; } // Yeni eklenen alan
         public DateTime CompletedAt { get; set; }
         public List<CategoryResultDto> CategoryResults { get; set; } = new List<CategoryResultDto>();
     }
