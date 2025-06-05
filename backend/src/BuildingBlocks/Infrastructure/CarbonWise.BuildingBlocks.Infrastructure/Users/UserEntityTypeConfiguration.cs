@@ -21,9 +21,44 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Users
                 .HasMaxLength(50)
                 .IsRequired();
 
+            builder.Property(u => u.Name)
+                .HasMaxLength(100)
+                .IsRequired(false);
+
+            builder.Property(u => u.Surname)
+                .HasMaxLength(100)
+                .IsRequired(false);
+
             builder.Property(u => u.Email)
                 .HasMaxLength(255)
                 .IsRequired();
+
+            builder.Property(u => u.Gender)
+                .HasMaxLength(20)
+                .IsRequired(false);
+
+            builder.Property(u => u.IsInInstitution)
+                .IsRequired();
+
+            builder.Property(u => u.IsStudent)
+                .IsRequired();
+
+            builder.Property(u => u.IsAcademicPersonal)
+                .IsRequired();
+
+            builder.Property(u => u.IsAdministrativeStaff)
+                .IsRequired();
+
+            builder.Property(u => u.UniqueId)
+                .HasMaxLength(255)
+                .IsRequired(false);
+
+            builder.Property(u => u.SustainabilityPoint)
+                .IsRequired(false);
+
+            builder.Property(u => u.ApiKey)
+                .HasMaxLength(500)
+                .IsRequired(false);
 
             builder.Property(u => u.PasswordHash)
                 .IsRequired();
@@ -34,6 +69,9 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Users
 
             builder.Property(u => u.CreatedAt)
                 .IsRequired();
+
+            builder.Property(u => u.LastLoginAt)
+                .IsRequired(false);
 
             builder.HasIndex(u => u.Username)
                 .IsUnique();

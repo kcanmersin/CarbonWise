@@ -24,11 +24,13 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Papers.Queries.GetAllPa
         {
             var papers = await _paperRepository.GetAllAsync();
 
-            return papers.Select(e => new PaperDto
+            return papers.Select(p => new PaperDto
             {
-                Id = e.Id.Value,
-                Date = e.Date,
-                Usage = e.Usage
+                Id = p.Id.Value,
+                Date = p.Date,
+                Usage = p.Usage,
+                BuildingId = p.BuildingId.Value,
+                BuildingName = p.Building?.Name
             }).ToList();
         }
     }

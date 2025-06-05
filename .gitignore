@@ -69,3 +69,41 @@ ClientBin/
 *.ldf
 *.sdf
 /backend/src/API/CarbonWise.API/appsettings.json
+
+
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Models and data
+models/
+*.pkl
+*.joblib
+
+# Logs
+logs/
+*.log
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+

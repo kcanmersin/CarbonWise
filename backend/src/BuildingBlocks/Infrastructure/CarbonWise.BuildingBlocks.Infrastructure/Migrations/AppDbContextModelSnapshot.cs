@@ -22,6 +22,89 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.AirQuality.AirQuality", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("char(36)");
+
+                    b.Property<int>("AQI")
+                        .HasColumnType("int");
+
+                    b.Property<double?>("CO")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("double");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DominentPollutant")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<double?>("Humidity")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("double");
+
+                    b.Property<double>("Latitude")
+                        .HasPrecision(10, 7)
+                        .HasColumnType("double");
+
+                    b.Property<double>("Longitude")
+                        .HasPrecision(10, 7)
+                        .HasColumnType("double");
+
+                    b.Property<double?>("NO2")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("double");
+
+                    b.Property<double?>("Ozone")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("double");
+
+                    b.Property<double?>("PM10")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("double");
+
+                    b.Property<double?>("PM25")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("double");
+
+                    b.Property<double?>("Pressure")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("double");
+
+                    b.Property<DateTime>("RecordDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<double?>("SO2")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("double");
+
+                    b.Property<double?>("Temperature")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("double");
+
+                    b.Property<double?>("WindSpeed")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("double");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("City");
+
+                    b.HasIndex("RecordDate");
+
+                    b.HasIndex("City", "RecordDate");
+
+                    b.ToTable("AirQualities", (string)null);
+                });
+
             modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Buildings.Building", b =>
                 {
                     b.Property<Guid>("Id")
@@ -226,6 +309,9 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("char(36)");
 
+                    b.Property<Guid>("BuildingId")
+                        .HasColumnType("char(36)");
+
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime(6)");
 
@@ -234,6 +320,8 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BuildingId");
 
                     b.HasIndex("Date");
 
@@ -288,6 +376,10 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("char(36)");
 
+                    b.Property<string>("ApiKey")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -296,8 +388,28 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
+                    b.Property<string>("Gender")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<bool>("IsAcademicPersonal")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsAdministrativeStaff")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsInInstitution")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsStudent")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<DateTime?>("LastLoginAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
@@ -306,6 +418,17 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                     b.Property<string>("Role")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<string>("Surname")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int?>("SustainabilityPoint")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UniqueId")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("Username")
                         .IsRequired()
@@ -328,6 +451,9 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("char(36)");
 
+                    b.Property<Guid>("BuildingId")
+                        .HasColumnType("char(36)");
+
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime(6)");
 
@@ -344,6 +470,8 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BuildingId");
 
                     b.HasIndex("Date");
 
@@ -415,6 +543,17 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                     b.Navigation("Building");
                 });
 
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Papers.Paper", b =>
+                {
+                    b.HasOne("CarbonWise.BuildingBlocks.Domain.Buildings.Building", "Building")
+                        .WithMany()
+                        .HasForeignKey("BuildingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Building");
+                });
+
             modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.SchoolInfos.SchoolInfo", b =>
                 {
                     b.HasOne("CarbonWise.BuildingBlocks.Domain.SchoolInfos.CampusVehicleEntry", "Vehicles")
@@ -424,6 +563,17 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Vehicles");
+                });
+
+            modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.Waters.Water", b =>
+                {
+                    b.HasOne("CarbonWise.BuildingBlocks.Domain.Buildings.Building", "Building")
+                        .WithMany()
+                        .HasForeignKey("BuildingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Building");
                 });
 
             modelBuilder.Entity("CarbonWise.BuildingBlocks.Domain.CarbonFootPrintTest.CarbonFootprintTest", b =>

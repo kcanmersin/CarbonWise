@@ -14,30 +14,33 @@ namespace CarbonWise.BuildingBlocks.Infrastructure
     {
         public DbSet<User> Users { get; set; }
 
-        //school info
+        // school info
         public DbSet<SchoolInfo> SchoolInfos { get; set; }
         public DbSet<CampusVehicleEntry> CampusVehicleEntries { get; set; }
 
-        //building
+        // building
         public DbSet<Building> Buildings { get; set; }
         public DbSet<Electric> Electrics { get; set; }
         public DbSet<Paper> Papers { get; set; }
         public DbSet<NaturalGas> NaturalGases { get; set; }
         public DbSet<Water> Waters { get; set; }
 
+        // carbon footprint test
         public DbSet<CarbonFootprintTest> CarbonFootprintTests { get; set; }
         public DbSet<TestQuestion> TestQuestions { get; set; }
         public DbSet<TestQuestionOption> TestQuestionOptions { get; set; }
         public DbSet<TestResponse> TestResponses { get; set; }
+
+        // air quality
+        public DbSet<Domain.AirQuality.AirQuality> AirQualities { get; set; }
+
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-
             base.OnModelCreating(modelBuilder);
         }
 

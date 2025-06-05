@@ -1,4 +1,5 @@
-﻿
+﻿using System;
+
 namespace CarbonWise.BuildingBlocks.Application.Features.Waters
 {
     public class WaterDto
@@ -8,5 +9,7 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Waters
         public decimal InitialMeterValue { get; set; }
         public decimal FinalMeterValue { get; set; }
         public decimal Usage { get; set; }
+        public Guid BuildingId { get; set; }
+        public string BuildingName { get; set; }
     }
 }

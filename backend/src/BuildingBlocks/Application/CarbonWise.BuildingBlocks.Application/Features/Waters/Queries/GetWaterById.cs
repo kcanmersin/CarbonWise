@@ -34,7 +34,9 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Waters.Queries.GetWater
                 Date = water.Date,
                 InitialMeterValue = water.InitialMeterValue,
                 FinalMeterValue = water.FinalMeterValue,
-                Usage = water.Usage
+                Usage = water.Usage,
+                BuildingId = water.BuildingId.Value,
+                BuildingName = water.Building?.Name
             };
         }
     }
