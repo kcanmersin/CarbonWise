@@ -38,6 +38,7 @@ using CarbonWise.BuildingBlocks.Application.Jobs;
 using CarbonWise.BuildingBlocks.Application.Services.AirQuality;
 using CarbonWise.BuildingBlocks.Domain.AirQuality;
 using CarbonWise.BuildingBlocks.Infrastructure.AirQuality;
+using CarbonWise.API.Services; // Add this using statement for IOAuthService
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,6 +77,9 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Add MemoryCache for OAuth state management
+builder.Services.AddMemoryCache();
+
 // Register repositories
 builder.Services.AddScoped<IAirQualityRepository, AirQualityRepository>();
 builder.Services.AddScoped<IAirQualityBackgroundService, AirQualityBackgroundService>();
@@ -98,6 +102,9 @@ builder.Services.AddScoped<ITestQuestionRepository, TestQuestionRepository>();
 // Register services
 builder.Services.AddScoped<ICarbonFootprintService, CarbonFootprintService>();
 builder.Services.AddScoped<ICarbonFootprintTestService, CarbonFootprintTestService>();
+
+// Register OAuth service - ADD THIS LINE
+builder.Services.AddScoped<IOAuthService, OAuthService>();
 
 // Register handlers
 builder.Services.AddScoped<RegisterUserCommandHandler>();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Helmet } from "react-helmet";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
@@ -14,25 +14,35 @@ import AdminTools from "./pages/AdminTools";
 import BuildingsManagement from "./pages/BuildingManagementPage";
 import ConsumptionTypesManagement from "./pages/ConsumptionTypeManagementPage";
 import SchoolInfoPage from "./pages/SchoolInfoManagementPage";
-import { checkAuthStatus } from "./services/authService";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
   
   // Your project name
   const projectName = "Resource Management System";
 
-  // Check if user is already logged in when app loads
-  useEffect(() => {
-    const authStatus = checkAuthStatus();
-    setIsLoggedIn(authStatus);
-    setIsLoading(false);
-  }, []);
+  const handleSuccessfulLogin = (authResult) => {
+    console.log("Login successful:", authResult);
+    
+    // Handle different response formats from backend
+    if (authResult && authResult.user) {
+      setUser(authResult.user);
+      setIsLoggedIn(true);
+      console.log("User logged in:", authResult.user);
+    } else if (authResult && authResult.success && authResult.user) {
+      setUser(authResult.user);
+      setIsLoggedIn(true);
+      console.log("User logged in:", authResult.user);
+    } else {
+      console.error("Invalid login result:", authResult);
+    }
+  };
 
-  const handleSuccessfulLogin = (userData) => {
-    console.log("Login successful:", userData);
-    setIsLoggedIn(true);
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUser(null);
+    console.log("User logged out");
   };
 
   // Protected route component
@@ -43,19 +53,6 @@ function App() {
     return children;
   };
 
-  if (isLoading) {
-    return (
-      <div style={{ 
-        display: "flex", 
-        justifyContent: "center", 
-        alignItems: "center", 
-        height: "100vh" 
-      }}>
-        Loading...
-      </div>
-    );
-  }
-
   return (
     <Router>
       <div>
@@ -65,79 +62,84 @@ function App() {
         </Helmet>
         
         <Routes>
-          <Route path="/login" element={
-            isLoggedIn ? <Navigate to="/" /> : <LoginPage onLoginSuccess={handleSuccessfulLogin} />
-          } />
+          <Route 
+            path="/login" 
+            element={
+              isLoggedIn ? 
+                <Navigate to="/" /> : 
+                <LoginPage onLoginSuccess={handleSuccessfulLogin} />
+            } 
+          />
           
           <Route path="/" element={
             <ProtectedRoute>
-              <Dashboard />
+              <Dashboard user={user} onLogout={handleLogout} />
             </ProtectedRoute>
           } />
           
           <Route path="/electricity" element={
             <ProtectedRoute>
-              <ElectricityPage />
+              <ElectricityPage user={user} onLogout={handleLogout} />
             </ProtectedRoute>
           } />
           
           <Route path="/water" element={
             <ProtectedRoute>
-              <WaterPage />
+              <WaterPage user={user} onLogout={handleLogout} />
             </ProtectedRoute>
           } />
           
           <Route path="/paper" element={
             <ProtectedRoute>
-              <PaperPage />
+              <PaperPage user={user} onLogout={handleLogout} />
             </ProtectedRoute>
           } />
           
           <Route path="/natural-gas" element={
             <ProtectedRoute>
-              <NaturalGasPage />
+              <NaturalGasPage user={user} onLogout={handleLogout} />
             </ProtectedRoute>
           } />
           
           <Route path="/carbon-footprint/calculations" element={
             <ProtectedRoute>
-              <CarbonFootprintCalculations />
+              <CarbonFootprintCalculations user={user} onLogout={handleLogout} />
             </ProtectedRoute>
           } />
 
           <Route path="/carbon-footprint/test" element={
             <ProtectedRoute>
-              <CarbonFootprintTestPage />
+              <CarbonFootprintTestPage user={user} onLogout={handleLogout} />
             </ProtectedRoute>
           } />
 
           <Route path="/reports" element={
             <ProtectedRoute>
-              <ReportsPage />
+              <ReportsPage user={user} onLogout={handleLogout} />
             </ProtectedRoute>
           } />
 
           <Route path="/admin" element={
             <ProtectedRoute>
-              <AdminTools />
+              <AdminTools user={user} onLogout={handleLogout} />
             </ProtectedRoute>
           } />
 
           <Route path="/admin/buildings" element={
             <ProtectedRoute>
-              <BuildingsManagement />
+              <BuildingsManagement user={user} onLogout={handleLogout} />
             </ProtectedRoute>
           } />
 
           <Route path="/admin/consumption-types" element={
             <ProtectedRoute>
-              <ConsumptionTypesManagement />
+              <ConsumptionTypesManagement user={user} onLogout={handleLogout} />
             </ProtectedRoute>
           } />
 
           <Route path="/admin/school-info" element={
             <ProtectedRoute>
-              <SchoolInfoPage />
+              <SchoolInfoPage user={user} onLogout={handleLogout} />
             </ProtectedRoute>
           } />
 

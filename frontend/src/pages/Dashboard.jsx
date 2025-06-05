@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import { getCityAirQuality, getGeoAirQuality } from "../services/dashboardService";
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, 
+  Tooltip, Legend, ResponsiveContainer, AreaChart, Area 
+} from 'recharts';
+import { getCityAirQuality, getGeoAirQuality, getMonthlyAirQuality } from "../services/dashboardService";
 
-export default function Dashboard() {
+export default function Dashboard({ user, onLogout }) {
+  const navigate = useNavigate();
   const [airQuality, setAirQuality] = useState(null);
   const [city, setCity] = useState("Kocaeli Gebze, Turkey");
   const [geoAirQuality, setGeoAirQuality] = useState(null);
@@ -10,6 +16,9 @@ export default function Dashboard() {
   const [cityInput, setCityInput] = useState(city);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [isLoadingMonthly, setIsLoadingMonthly] = useState(false);
+  const [monthlyError, setMonthlyError] = useState(null);
 
   // Air quality color scale based on AQI value
   const getAqiColor = (aqi) => {
@@ -19,6 +28,16 @@ export default function Dashboard() {
     if (aqi <= 200) return { bg: "#fe6a69", text: "#a11c1c", level: "Unhealthy" };
     if (aqi <= 300) return { bg: "#a97abc", text: "#4f266e", level: "Very Unhealthy" };
     return { bg: "#a87383", text: "#591035", level: "Hazardous" };
+  };
+
+  // Get AQI color for chart
+  const getAqiChartColor = (aqi) => {
+    if (aqi <= 50) return "#a8e05f";
+    if (aqi <= 100) return "#fdd74b";
+    if (aqi <= 150) return "#fe9b57";
+    if (aqi <= 200) return "#fe6a69";
+    if (aqi <= 300) return "#a97abc";
+    return "#a87383";
   };
 
   // Icons for different pollutants and weather parameters
@@ -62,6 +81,46 @@ export default function Dashboard() {
     };
 
     fetchAirQuality();
+  }, [city]);
+
+  // Fetch monthly air quality data
+  useEffect(() => {
+    const fetchMonthlyAirQuality = async () => {
+      setIsLoadingMonthly(true);
+      setMonthlyError(null);
+      try {
+        const data = await getMonthlyAirQuality(city);
+        console.log("Monthly air quality data:", data);
+        
+        // Process the data for the chart - using actual API response structure
+        const processedData = data.map(item => ({
+          date: new Date(item.recordDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          fullDate: item.recordDate,
+          aqi: item.aqi,
+          pm25: item.pM25 || 0,
+          pm10: item.pM10 || 0,
+          no2: item.nO2 || 0,
+          so2: item.sO2 || 0,
+          co: item.co || 0,
+          ozone: item.ozone || 0,
+          temperature: item.temperature || 0,
+          humidity: item.humidity || 0,
+          pressure: item.pressure || 0,
+          windSpeed: item.windSpeed || 0,
+          dominentpol: item.dominentPollutant,
+          city: item.city
+        })).sort((a, b) => new Date(a.fullDate) - new Date(b.fullDate));
+        
+        setMonthlyData(processedData);
+      } catch (error) {
+        console.error("Error fetching monthly air quality data:", error);
+        setMonthlyError("Failed to load monthly air quality data.");
+      } finally {
+        setIsLoadingMonthly(false);
+      }
+    };
+
+    fetchMonthlyAirQuality();
   }, [city]);
 
   // Handle city search
@@ -130,6 +189,51 @@ export default function Dashboard() {
     { key: "adminTools", name: "Admin Tools" },
     { key: "reports", name: "Reports" }
   ];
+
+  // Custom tooltip for the chart
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      const aqiInfo = getAqiColor(data.aqi);
+      
+      return (
+        <div style={{
+          backgroundColor: "white",
+          padding: "1rem",
+          border: "1px solid #ddd",
+          borderRadius: "8px",
+          boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+          minWidth: "250px"
+        }}>
+          <p style={{ margin: "0 0 0.5rem 0", fontWeight: "bold" }}>{label}</p>
+          <div style={{
+            padding: "0.5rem",
+            backgroundColor: aqiInfo.bg,
+            color: aqiInfo.text,
+            borderRadius: "4px",
+            marginBottom: "0.5rem"
+          }}>
+            <p style={{ margin: 0, fontWeight: "bold" }}>AQI: {data.aqi} ({aqiInfo.level})</p>
+          </div>
+          <div style={{ fontSize: "0.9rem" }}>
+            <p style={{ margin: "0.25rem 0" }}>🏭 Dominant: {data.dominentpol?.toUpperCase()}</p>
+            <p style={{ margin: "0.25rem 0" }}>🌫️ PM2.5: {data.pm25} µg/m³</p>
+            <p style={{ margin: "0.25rem 0" }}>💨 PM10: {data.pm10} µg/m³</p>
+            <p style={{ margin: "0.25rem 0" }}>🧪 SO2: {data.so2} µg/m³</p>
+            <p style={{ margin: "0.25rem 0" }}>🏭 NO2: {data.no2} µg/m³</p>
+            <p style={{ margin: "0.25rem 0" }}>🚗 CO: {data.co} µg/m³</p>
+            {data.ozone > 0 && <p style={{ margin: "0.25rem 0" }}>☀️ Ozone: {data.ozone} µg/m³</p>}
+            <hr style={{ margin: "0.5rem 0", border: "none", borderTop: "1px solid #eee" }} />
+            <p style={{ margin: "0.25rem 0" }}>🌡️ Temperature: {data.temperature}°C</p>
+            <p style={{ margin: "0.25rem 0" }}>💧 Humidity: {data.humidity}%</p>
+            <p style={{ margin: "0.25rem 0" }}>💨 Wind: {data.windSpeed} m/s</p>
+            <p style={{ margin: "0.25rem 0" }}>📊 Pressure: {data.pressure} hPa</p>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   // Render an air quality card
   const renderAirQualityCard = (data, title) => {
@@ -283,7 +387,7 @@ export default function Dashboard() {
                   boxShadow: "0 6px 8px rgba(0, 0, 0, 0.15)"
                 }
               }}
-              onClick={() => window.location.href = "/electricity"}
+              onClick={() => navigate("/electricity")}
             >
               <h3 style={{ margin: "0 0 0.5rem 0" }}>Electricity</h3>
               <p style={{ margin: 0 }}>Monitor and analyze electricity consumption</p>
@@ -300,7 +404,7 @@ export default function Dashboard() {
                 boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                 transition: "transform 0.2s, box-shadow 0.2s"
               }}
-              onClick={() => window.location.href = "/water"}
+              onClick={() => navigate("/water")}
             >
               <h3 style={{ margin: "0 0 0.5rem 0" }}>Water</h3>
               <p style={{ margin: 0 }}>Monitor and analyze water consumption</p>
@@ -317,7 +421,7 @@ export default function Dashboard() {
                 boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                 transition: "transform 0.2s, box-shadow 0.2s"
               }}
-              onClick={() => window.location.href = "/paper"}
+              onClick={() => navigate("/paper")}
             >
               <h3 style={{ margin: "0 0 0.5rem 0" }}>Paper</h3>
               <p style={{ margin: 0 }}>Monitor and analyze paper consumption</p>
@@ -334,7 +438,7 @@ export default function Dashboard() {
                 boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                 transition: "transform 0.2s, box-shadow 0.2s"
               }}
-              onClick={() => window.location.href = "/natural-gas"}
+              onClick={() => navigate("/natural-gas")}
             >
               <h3 style={{ margin: "0 0 0.5rem 0" }}>Natural Gas</h3>
               <p style={{ margin: 0 }}>Monitor and analyze natural gas consumption</p>
@@ -399,6 +503,155 @@ export default function Dashboard() {
                 <span>📍</span> My Location
               </button>
             </div>
+          </div>
+
+          {/* Monthly Air Quality Chart */}
+          <div style={{
+            backgroundColor: "white",
+            padding: "1.5rem",
+            borderRadius: "12px",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            marginBottom: "2rem"
+          }}>
+            <h3 style={{ 
+              margin: "0 0 1.5rem 0", 
+              color: "#2c3e50",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem"
+            }}>
+              📊 Air Quality Trend - Last 30 Days ({airQuality?.city?.name || city})
+            </h3>
+
+            {/* Monthly chart loading */}
+            {isLoadingMonthly && (
+              <div style={{ 
+                textAlign: "center", 
+                padding: "2rem"
+              }}>
+                <div style={{
+                  display: "inline-block",
+                  width: "40px",
+                  height: "40px",
+                  border: "4px solid #f3f3f3",
+                  borderTop: "4px solid #3498db",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite"
+                }}></div>
+                <style>
+                  {`
+                    @keyframes spin {
+                      0% { transform: rotate(0deg); }
+                      100% { transform: rotate(360deg); }
+                    }
+                  `}
+                </style>
+                <p style={{ marginTop: "1rem" }}>Loading monthly air quality data...</p>
+              </div>
+            )}
+
+            {/* Monthly chart error */}
+            {monthlyError && (
+              <div style={{
+                backgroundColor: "#f8d7da",
+                color: "#721c24",
+                padding: "1rem",
+                borderRadius: "4px",
+                textAlign: "center"
+              }}>
+                <strong>Error:</strong> {monthlyError}
+              </div>
+            )}
+
+            {/* Monthly chart */}
+            {!isLoadingMonthly && !monthlyError && monthlyData.length > 0 && (
+              <div style={{ height: "400px" }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={monthlyData}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 30 }}
+                  >
+                    <defs>
+                      <linearGradient id="aqiGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3498db" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#3498db" stopOpacity={0.1}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="date" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                      fontSize={12}
+                    />
+                    <YAxis 
+                      label={{ value: 'AQI Value', angle: -90, position: 'insideLeft' }}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Area
+                      type="monotone"
+                      dataKey="aqi"
+                      stroke="#3498db"
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#aqiGradient)"
+                      name="Air Quality Index (AQI)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* No data message */}
+            {!isLoadingMonthly && !monthlyError && monthlyData.length === 0 && (
+              <div style={{
+                textAlign: "center",
+                padding: "2rem",
+                color: "#7f8c8d"
+              }}>
+                <p>No monthly air quality data available for this city.</p>
+              </div>
+            )}
+
+            {/* AQI Legend */}
+            {!isLoadingMonthly && !monthlyError && monthlyData.length > 0 && (
+              <div style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "1rem",
+                marginTop: "1rem",
+                padding: "1rem",
+                backgroundColor: "#f8f9fa",
+                borderRadius: "8px"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <div style={{ width: "20px", height: "10px", backgroundColor: "#a8e05f" }}></div>
+                  <span style={{ fontSize: "0.8rem" }}>Good (0-50)</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <div style={{ width: "20px", height: "10px", backgroundColor: "#fdd74b" }}></div>
+                  <span style={{ fontSize: "0.8rem" }}>Moderate (51-100)</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <div style={{ width: "20px", height: "10px", backgroundColor: "#fe9b57" }}></div>
+                  <span style={{ fontSize: "0.8rem" }}>Unhealthy for Sensitive (101-150)</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <div style={{ width: "20px", height: "10px", backgroundColor: "#fe6a69" }}></div>
+                  <span style={{ fontSize: "0.8rem" }}>Unhealthy (151-200)</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <div style={{ width: "20px", height: "10px", backgroundColor: "#a97abc" }}></div>
+                  <span style={{ fontSize: "0.8rem" }}>Very Unhealthy (201-300)</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <div style={{ width: "20px", height: "10px", backgroundColor: "#a87383" }}></div>
+                  <span style={{ fontSize: "0.8rem" }}>Hazardous (300+)</span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Loading state */}

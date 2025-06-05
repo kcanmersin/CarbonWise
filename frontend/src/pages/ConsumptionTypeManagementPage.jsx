@@ -22,7 +22,7 @@ import {
 } from "../services/naturalGasService";
 
 import {
-  getAllPapers,
+  getPaperByBuilding,
   createPaper,
   updatePaper,
   deletePaper,
@@ -31,7 +31,7 @@ import {
 } from "../services/paperService";
 
 import {
-  getAllWaters,
+  getWaterByBuilding,
   createWater,
   updateWater,
   deleteWater,
@@ -99,12 +99,12 @@ export default function ConsumptionTypesManagement() {
     { key: "reports", name: "Reports" }
   ];
 
-  // Consumption types and their properties
+  // Updated consumption types - ALL now require buildings
   const consumptionTypes = [
     { type: "Electric", requiresBuilding: true, unit: "kWh", color: "#3498db", icon: "⚡" },
     { type: "NaturalGas", requiresBuilding: true, unit: "m³", color: "#e74c3c", icon: "🔥" },
-    { type: "Water", requiresBuilding: false, unit: "m³", color: "#2ecc71", icon: "💧" },
-    { type: "Paper", requiresBuilding: false, unit: "kg", color: "#f39c12", icon: "📄" }
+    { type: "Water", requiresBuilding: true, unit: "m³", color: "#2ecc71", icon: "💧" },
+    { type: "Paper", requiresBuilding: true, unit: "kg", color: "#f39c12", icon: "📄" }
   ];
 
   // Fetch data on component mount
@@ -114,7 +114,7 @@ export default function ConsumptionTypesManagement() {
 
   // Fetch data when selected type or building changes
   useEffect(() => {
-    if (selectedBuildingId || !getCurrentTypeConfig().requiresBuilding) {
+    if (selectedBuildingId) {
       fetchConsumptionData();
     }
   }, [selectedType, selectedBuildingId]);
@@ -133,29 +133,31 @@ export default function ConsumptionTypesManagement() {
       switch (selectedType) {
         case "Electric":
           if (selectedBuildingId) {
-            // Get only records for the selected building
             data = await getElectricByBuilding(selectedBuildingId);
           } else {
-            // No building selected, keep array empty
             data = [];
           }
           break;
         case "NaturalGas":
           if (selectedBuildingId) {
-            // Get only records for the selected building
             data = await getNaturalGasByBuilding(selectedBuildingId);
           } else {
-            // No building selected, keep array empty
             data = [];
           }
           break;
         case "Water":
-          // Water doesn't require building selection
-          data = await getAllWaters();
+          if (selectedBuildingId) {
+            data = await getWaterByBuilding(selectedBuildingId);
+          } else {
+            data = [];
+          }
           break;
         case "Paper":
-          // Paper doesn't require building selection
-          data = await getAllPapers();
+          if (selectedBuildingId) {
+            data = await getPaperByBuilding(selectedBuildingId);
+          } else {
+            data = [];
+          }
           break;
         default:
           throw new Error(`Unknown consumption type: ${selectedType}`);
@@ -268,8 +270,7 @@ export default function ConsumptionTypesManagement() {
   };
 
   // Handle edit record
-  // Update the handleEdit function
-const handleEdit = (record) => {
+  const handleEdit = (record) => {
     setEditingRecord(record);
     
     // Create a base form data object
@@ -351,7 +352,8 @@ const handleEdit = (record) => {
   // Prepare record data based on selected type
   const prepareRecordData = () => {
     const baseData = {
-      date: new Date(formData.date).toISOString()
+      date: new Date(formData.date).toISOString(),
+      buildingId: formData.buildingId // All types now require buildingId
     };
     
     // Add type-specific fields
@@ -361,16 +363,14 @@ const handleEdit = (record) => {
           ...baseData,
           initialMeterValue: parseFloat(formData.initialMeterValue),
           finalMeterValue: parseFloat(formData.finalMeterValue),
-          kwhValue: parseFloat(formData.kwhValue),
-          buildingId: formData.buildingId
+          kwhValue: parseFloat(formData.kwhValue)
         };
       case "NaturalGas":
         return {
           ...baseData,
           initialMeterValue: parseFloat(formData.initialMeterValue),
           finalMeterValue: parseFloat(formData.finalMeterValue),
-          sM3Value: parseFloat(formData.sM3Value),
-          buildingId: formData.buildingId
+          sM3Value: parseFloat(formData.sM3Value)
         };
       case "Paper":
         return {
@@ -381,7 +381,8 @@ const handleEdit = (record) => {
         return {
           ...baseData,
           initialMeterValue: parseFloat(formData.initialMeterValue),
-          finalMeterValue: parseFloat(formData.finalMeterValue)
+          finalMeterValue: parseFloat(formData.finalMeterValue),
+          usage: parseFloat(formData.finalMeterValue) - parseFloat(formData.initialMeterValue) // Calculate usage for water
         };
       default:
         return baseData;
@@ -502,14 +503,14 @@ const handleEdit = (record) => {
   const handleUploadExcel = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-  
+
     setIsLoading(true);
     setError(null);
     
     try {
       switch (selectedType) {
         case "Electric":
-          await electricityMultipleUpload(file); // Pass just the file, not the event
+          await electricityMultipleUpload(file);
           break;
         case "NaturalGas":
           await naturalGasMultipleUpload(file);
@@ -554,7 +555,7 @@ const handleEdit = (record) => {
         {/* Consumption Type Selector and Download Button */}
         <div style={{
           display: "flex",
-          justifyContent: "space-between", // This will push items to edges
+          justifyContent: "space-between",
           alignItems: "center",
           marginBottom: "2rem",
           gap: "1rem"
@@ -591,7 +592,7 @@ const handleEdit = (record) => {
             ))}
           </div>
           
-          {/* Download button - will be pushed to the right */}
+          {/* Download button */}
           <button
             onClick={handleDownloadTemplate}
             style={{
@@ -612,12 +613,7 @@ const handleEdit = (record) => {
           </button>
         </div>
 
-        <div ref={formRef}
-            style={{
-                marginBottom: "2rem"
-            }}
-            ></div>
-        
+        <div ref={formRef} style={{ marginBottom: "2rem" }}></div>
 
         {/* Error message */}
         {error && (
@@ -688,42 +684,40 @@ const handleEdit = (record) => {
                 />
               </div>
 
-              {/* Building - Only for types that require building */}
-              {getCurrentTypeConfig().requiresBuilding && (
-                <div>
-                  <label
-                    htmlFor="buildingId"
-                    style={{
-                      display: "block",
-                      marginBottom: "0.5rem",
-                      fontWeight: "bold",
-                      color: "#34495e"
-                    }}
-                  >
-                    Building*
-                  </label>
-                  <select
-                    id="buildingId"
-                    name="buildingId"
-                    value={formData.buildingId}
-                    onChange={handleInputChange}
-                    required
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: "4px",
-                      border: "1px solid #ddd",
-                      backgroundColor: "white",
-                      boxSizing: "border-box"
-                    }}
-                  >
-                    <option value="">Select a building</option>
-                    {buildings.map(building => (
-                      <option key={building.id} value={building.id}>{building.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              {/* Building - Required for ALL types now */}
+              <div>
+                <label
+                  htmlFor="buildingId"
+                  style={{
+                    display: "block",
+                    marginBottom: "0.5rem",
+                    fontWeight: "bold",
+                    color: "#34495e"
+                  }}
+                >
+                  Building*
+                </label>
+                <select
+                  id="buildingId"
+                  name="buildingId"
+                  value={formData.buildingId}
+                  onChange={handleInputChange}
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "0.75rem",
+                    borderRadius: "4px",
+                    border: "1px solid #ddd",
+                    backgroundColor: "white",
+                    boxSizing: "border-box"
+                  }}
+                >
+                  <option value="">Select a building</option>
+                  {buildings.map(building => (
+                    <option key={building.id} value={building.id}>{building.name}</option>
+                  ))}
+                </select>
+              </div>
 
               {/* Electric & Natural Gas & Water - Initial & Final Meter Values */}
               {(selectedType === "Electric" || selectedType === "NaturalGas" || selectedType === "Water") && (
@@ -899,7 +893,7 @@ const handleEdit = (record) => {
               display: "flex",
               gap: "1rem",
               justifyContent: "flex-end",
-              alignItems: "center" // Add this for alignment
+              alignItems: "center"
             }}>
               {editingRecord && (
                 <button
@@ -968,36 +962,34 @@ const handleEdit = (record) => {
           </form>
         </div>
 
-        {/* Building Selector - Only displayed for types that require a building */}
-        {getCurrentTypeConfig().requiresBuilding && (
-          <div style={{
-            backgroundColor: "white",
-            padding: "1.5rem",
-            borderRadius: "8px",
-            boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-            marginBottom: "2rem"
-          }}>
-            <h2 style={{ margin: "0 0 1rem 0", color: "#2c3e50" }}>Select Building</h2>
-            <select
-              value={selectedBuildingId}
-              onChange={handleBuildingSelect}
-              style={{
-                width: "100%",
-                padding: "0.75rem",
-                borderRadius: "4px",
-                border: "1px solid #ddd",
-                backgroundColor: "white",
-                boxSizing: "border-box",
-                fontSize: "1rem"
-              }}
-            >
-              <option value="">Select a building</option>
-              {buildings.map(building => (
-                <option key={building.id} value={building.id}>{building.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
+        {/* Building Selector - Now displayed for ALL types since all require buildings */}
+        <div style={{
+          backgroundColor: "white",
+          padding: "1.5rem",
+          borderRadius: "8px",
+          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+          marginBottom: "2rem"
+        }}>
+          <h2 style={{ margin: "0 0 1rem 0", color: "#2c3e50" }}>Select Building</h2>
+          <select
+            value={selectedBuildingId}
+            onChange={handleBuildingSelect}
+            style={{
+              width: "100%",
+              padding: "0.75rem",
+              borderRadius: "4px",
+              border: "1px solid #ddd",
+              backgroundColor: "white",
+              boxSizing: "border-box",
+              fontSize: "1rem"
+            }}
+          >
+            <option value="">Select a building</option>
+            {buildings.map(building => (
+              <option key={building.id} value={building.id}>{building.name}</option>
+            ))}
+          </select>
+        </div>
 
         {/* Records List */}
         <div style={{
@@ -1051,10 +1043,10 @@ const handleEdit = (record) => {
               padding: "2rem",
               color: "#7f8c8d"
             }}>
-              {getCurrentTypeConfig().requiresBuilding && !selectedBuildingId ? (
+              {!selectedBuildingId ? (
                 <p>Please select a building to view {selectedType.toLowerCase()} records.</p>
               ) : (
-                <p>No {selectedType.toLowerCase()} records found. Add your first record using the form above.</p>
+                <p>No {selectedType.toLowerCase()} records found for this building. Add your first record using the form above.</p>
               )}
             </div>
           )}
@@ -1104,9 +1096,8 @@ const handleEdit = (record) => {
                       <th style={{ padding: "0.75rem 1rem", textAlign: "left" }}>Usage (kg)</th>
                     )}
                     
-                    {getCurrentTypeConfig().requiresBuilding && (
-                      <th style={{ padding: "0.75rem 1rem", textAlign: "left" }}>Building</th>
-                    )}
+                    {/* Building column - now shown for ALL types */}
+                    <th style={{ padding: "0.75rem 1rem", textAlign: "left" }}>Building</th>
                     
                     <th style={{ padding: "0.75rem 1rem", textAlign: "center" }}>Actions</th>
                   </tr>
@@ -1140,7 +1131,7 @@ const handleEdit = (record) => {
                           <td style={{ padding: "0.75rem 1rem" }}>{record.initialMeterValue}</td>
                           <td style={{ padding: "0.75rem 1rem" }}>{record.finalMeterValue}</td>
                           <td style={{ padding: "0.75rem 1rem", fontWeight: "bold" }}>
-                            {(record.finalMeterValue - record.initialMeterValue).toFixed(2)} m³
+                            {record.usage ? record.usage.toFixed(2) : (record.finalMeterValue - record.initialMeterValue).toFixed(2)} m³
                           </td>
                         </>
                       )}
@@ -1150,12 +1141,8 @@ const handleEdit = (record) => {
                         <td style={{ padding: "0.75rem 1rem", fontWeight: "bold" }}>{record.usage} kg</td>
                       )}
                       
-                      {/* Building column (if applicable) */}
-                      {getCurrentTypeConfig().requiresBuilding && (
-                        <td style={{ padding: "0.75rem 1rem" }}>{getBuildingName(record.buildingId)}</td>
-                      )}
-                      
-                      
+                      {/* Building column - now shown for ALL types */}
+                      <td style={{ padding: "0.75rem 1rem" }}>{getBuildingName(record.buildingId)}</td>
                       
                       {/* Actions column */}
                       <td style={{ 

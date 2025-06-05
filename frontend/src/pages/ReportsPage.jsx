@@ -118,11 +118,8 @@ const ReportsPage = () => {
       
       if (reportType === "consumption") {
         if (exportFormat === "pdf") {
-          // Determine if building ID is needed based on consumption type
-          let buildingIdToSend = null;
-          if (selectedConsumptionType === "Electric" || selectedConsumptionType === "NaturalGas") {
-            buildingIdToSend = selectedBuildingId || null;
-          }
+          // ALL consumption types now require building selection (or allow "All Buildings")
+          let buildingIdToSend = selectedBuildingId || null;
           
           // Generate consumption PDF report
           const pdfBlob = await generateConsumptionPdfReport(
@@ -135,7 +132,7 @@ const ReportsPage = () => {
           // Create download link
           const startDateStr = formattedStartDate.slice(0,10).replace(/-/g, "");
           const endDateStr = formattedEndDate.slice(0,10).replace(/-/g, "");
-          const buildingStr = buildingIdToSend ? `_${buildingIdToSend.substring(0,8)}` : "";
+          const buildingStr = buildingIdToSend ? `_${buildingIdToSend.substring(0,8)}` : "_AllBuildings";
           
           const fileName = `${selectedConsumptionType}ConsumptionReport${buildingStr}_${startDateStr}-${endDateStr}.pdf`;
           
@@ -144,19 +141,21 @@ const ReportsPage = () => {
           link.download = fileName;
           link.click();
         } else if (exportFormat === "excel") {
-          // Export consumption data as Excel
+          // Export consumption data as Excel - now includes building context
           const excelBlob = await exportConsumptionData(
             selectedConsumptionType,
             formattedStartDate,
             formattedEndDate,
-            includeGraphs
+            includeGraphs,
+            selectedBuildingId // Add building ID for Excel export too
           );
           
           // Create download link
           const startDateStr = formattedStartDate.slice(0,10).replace(/-/g, "");
           const endDateStr = formattedEndDate.slice(0,10).replace(/-/g, "");
+          const buildingStr = selectedBuildingId ? `_${selectedBuildingId.substring(0,8)}` : "_AllBuildings";
           
-          const fileName = `${selectedConsumptionType}_ConsumptionData_${startDateStr}-${endDateStr}.xlsx`;
+          const fileName = `${selectedConsumptionType}_ConsumptionData${buildingStr}_${startDateStr}-${endDateStr}.xlsx`;
           
           const link = document.createElement("a");
           link.href = URL.createObjectURL(excelBlob);
@@ -187,11 +186,25 @@ const ReportsPage = () => {
     }
   };
 
-  // Check if building selection should be shown
+  // Updated: Building selection should be shown for ALL consumption types
   const shouldShowBuildingSelect = () => {
-    return reportType === "consumption" && 
-           (selectedConsumptionType === "Electric" || selectedConsumptionType === "NaturalGas") &&
-           exportFormat === "pdf";
+    return reportType === "consumption";
+  };
+
+  // Get building-specific consumption types that require building selection
+  const getBuildingRequiredTypes = () => {
+    return ["Electric", "NaturalGas", "Water", "Paper"]; // All types now require buildings
+  };
+
+  // Get user-friendly consumption type labels
+  const getConsumptionTypeLabel = (type) => {
+    const labels = {
+      "Electric": "Electricity",
+      "NaturalGas": "Natural Gas", 
+      "Water": "Water",
+      "Paper": "Paper"
+    };
+    return labels[type] || type;
   };
 
   const formatInputLabel = (text) => {
@@ -242,7 +255,7 @@ const ReportsPage = () => {
                 }
               `}
             </style>
-            <p>Loading data...</p>
+            <p>Generating report...</p>
           </div>
         )}
 
@@ -255,51 +268,80 @@ const ReportsPage = () => {
             marginBottom: "1rem"
           }}>
             <strong>Error:</strong> {error}
+            <button 
+              onClick={() => setError(null)} 
+              style={{
+                marginLeft: "10px",
+                background: "none",
+                border: "none",
+                color: "#721c24",
+                fontWeight: "bold",
+                cursor: "pointer"
+              }}
+            >
+              ×
+            </button>
           </div>
         )}
 
         <div style={{ 
           backgroundColor: "#fff", 
           padding: "1.5rem", 
-          borderRadius: "4px", 
-          boxShadow: "0 2px 4px rgba(0,0,0,0.1)", 
+          borderRadius: "8px", 
+          boxShadow: "0 4px 6px rgba(0,0,0,0.1)", 
           marginBottom: "1rem",
-          maxWidth: "600px",
+          maxWidth: "700px",
           margin: "0 auto"
         }}>
-          <h3 style={{ marginBottom: "1.5rem", textAlign: "center" }}>Generate Reports</h3>
+          <h3 style={{ 
+            marginBottom: "1.5rem", 
+            textAlign: "center",
+            color: "#2c3e50",
+            fontSize: "1.5rem"
+          }}>
+            📊 Generate Reports
+          </h3>
           
+          {/* Report Type Selection */}
           <div style={{ marginBottom: "1.5rem" }}>
-            <label style={formatInputLabel()} htmlFor="reportTypeSelect">Report Type:</label>
+            <label style={formatInputLabel()} htmlFor="reportTypeSelect">
+              📄 Report Type:
+            </label>
             <select 
               id="reportTypeSelect"
               value={reportType}
               onChange={handleReportTypeChange}
               style={inputStyle}
             >
-              <option value="consumption">Consumption Report</option>
-              <option value="carbonFootprint">Carbon Footprint Report</option>
+              <option value="consumption">📈 Consumption Report</option>
+              <option value="carbonFootprint">🌱 Carbon Footprint Report</option>
             </select>
           </div>
 
+          {/* Export Format Selection (only for consumption reports) */}
           {reportType === "consumption" && (
             <div style={{ marginBottom: "1.5rem" }}>
-              <label style={formatInputLabel()} htmlFor="exportFormatSelect">Export Format:</label>
+              <label style={formatInputLabel()} htmlFor="exportFormatSelect">
+                💾 Export Format:
+              </label>
               <select 
                 id="exportFormatSelect"
                 value={exportFormat}
                 onChange={handleExportFormatChange}
                 style={inputStyle}
               >
-                <option value="pdf">PDF Report</option>
-                <option value="excel">Excel Data</option>
+                <option value="pdf">📑 PDF Report</option>
+                <option value="excel">📊 Excel Data</option>
               </select>
             </div>
           )}
 
+          {/* Consumption Type Selection */}
           {reportType === "consumption" && (
             <div style={{ marginBottom: "1.5rem" }}>
-              <label style={formatInputLabel()} htmlFor="consumptionSelect">Consumption Type:</label>
+              <label style={formatInputLabel()} htmlFor="consumptionSelect">
+                ⚡ Resource Type:
+              </label>
               <select 
                 id="consumptionSelect"
                 value={selectedConsumptionType}
@@ -307,35 +349,49 @@ const ReportsPage = () => {
                 style={inputStyle}
               >
                 {consumptionTypes.map((type) => (
-                  <option key={type} value={type}>{type}</option>
+                  <option key={type} value={type}>
+                    {getConsumptionTypeLabel(type)}
+                  </option>
                 ))}
               </select>
             </div>
           )}
 
+          {/* Building Selection - Now shown for ALL consumption types */}
           {shouldShowBuildingSelect() && (
             <div style={{ marginBottom: "1.5rem" }}>
-              <label style={formatInputLabel()} htmlFor="buildingSelect">Building:</label>
+              <label style={formatInputLabel()} htmlFor="buildingSelect">
+                🏢 Building:
+              </label>
               <select 
                 id="buildingSelect"
                 value={selectedBuildingId}
                 onChange={(e) => setSelectedBuildingId(e.target.value)}
                 style={inputStyle}
               >
-                <option value="">All Buildings</option>
+                <option value="">🏫 All Buildings</option>
                 {buildings.map(building => (
-                  <option key={building.id} value={building.id}>{building.name}</option>
+                  <option key={building.id} value={building.id}>
+                    {building.name}
+                  </option>
                 ))}
               </select>
+              <small style={{ color: "#6c757d", fontSize: "0.85rem" }}>
+                Select a specific building or choose "All Buildings" for combined data
+              </small>
             </div>
           )}
 
+          {/* Year Selection */}
           <div style={{ marginBottom: "1.5rem" }}>
-            <label style={formatInputLabel()} htmlFor="yearSelect">Year:</label>
+            <label style={formatInputLabel()} htmlFor="yearSelect">
+              📅 Year:
+            </label>
             <select 
               id="yearSelect"
               onChange={handleYearChange}
               style={inputStyle}
+              defaultValue={2024}
             >
               {availableYears.map(year => (
                 <option key={year} value={year}>{year}</option>
@@ -343,68 +399,132 @@ const ReportsPage = () => {
             </select>
           </div>
 
-          <div style={{ marginBottom: "1.5rem" }}>
-            <label style={formatInputLabel()} htmlFor="startDate">Start Date:</label>
-            <input 
-              type="datetime-local"
-              id="startDate"
-              value={startDate.slice(0, 19)} // Adjusting for `datetime-local` input format
-              onChange={handleStartDateChange}
-              style={inputStyle}
-            />
+          {/* Date Range Selection */}
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: "1fr 1fr", 
+            gap: "1rem",
+            marginBottom: "1.5rem"
+          }}>
+            <div>
+              <label style={formatInputLabel()} htmlFor="startDate">
+                📅 Start Date:
+              </label>
+              <input 
+                type="datetime-local"
+                id="startDate"
+                value={startDate.slice(0, 19)}
+                onChange={handleStartDateChange}
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label style={formatInputLabel()} htmlFor="endDate">
+                📅 End Date:
+              </label>
+              <input 
+                type="datetime-local"
+                id="endDate"
+                value={endDate.slice(0, 19)}
+                onChange={handleEndDateChange}
+                style={inputStyle}
+              />
+            </div>
           </div>
 
-          <div style={{ marginBottom: "1.5rem" }}>
-            <label style={formatInputLabel()} htmlFor="endDate">End Date:</label>
-            <input 
-              type="datetime-local"
-              id="endDate"
-              value={endDate.slice(0, 19)} // Adjusting for `datetime-local` input format
-              onChange={handleEndDateChange}
-              style={inputStyle}
-            />
-          </div>
-
+          {/* Include Graphs Option (for Excel export) */}
           {reportType === "consumption" && exportFormat === "excel" && (
-            <div style={{ marginBottom: "1.5rem" }}>
-              <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+            <div style={{ 
+              marginBottom: "1.5rem",
+              padding: "1rem",
+              backgroundColor: "#f8f9fa",
+              borderRadius: "6px",
+              border: "1px solid #e9ecef"
+            }}>
+              <label style={{ 
+                display: "flex", 
+                alignItems: "center", 
+                cursor: "pointer",
+                fontWeight: "500"
+              }}>
                 <input 
                   type="checkbox"
                   checked={includeGraphs}
                   onChange={handleIncludeGraphsChange}
-                  style={checkboxStyle}
+                  style={{
+                    ...checkboxStyle,
+                    width: "18px",
+                    height: "18px"
+                  }}
                 />
-                Include graphs in Excel export
+                📊 Include graphs in Excel export
               </label>
+              <small style={{ color: "#6c757d", fontSize: "0.85rem", marginLeft: "24px" }}>
+                Add visual charts to the Excel file for better data analysis
+              </small>
             </div>
           )}
 
+          {/* Download Button */}
           <button
             onClick={handleDownloadReport}
+            disabled={isLoading}
             style={{
-              padding: "0.8rem 1.5rem",
+              padding: "1rem 1.5rem",
               backgroundColor: (() => {
+                if (isLoading) return "#94a3b8";
                 if (reportType === "consumption") {
-                  return exportFormat === "pdf" ? "#4CAF50" : "#f39c12";
+                  return exportFormat === "pdf" ? "#10b981" : "#f59e0b";
                 }
-                return "#3498db";
+                return "#3b82f6";
               })(),
               color: "#fff",
               border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
+              borderRadius: "8px",
+              cursor: isLoading ? "not-allowed" : "pointer",
               width: "100%",
-              fontWeight: "bold"
+              fontWeight: "600",
+              fontSize: "1rem",
+              transition: "all 0.3s ease",
+              boxShadow: isLoading ? "none" : "0 4px 6px rgba(0,0,0,0.1)"
+            }}
+            onMouseEnter={(e) => {
+              if (!isLoading) {
+                e.target.style.transform = "translateY(-2px)";
+                e.target.style.boxShadow = "0 6px 12px rgba(0,0,0,0.15)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isLoading) {
+                e.target.style.transform = "translateY(0)";
+                e.target.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
+              }
             }}
           >
-            {(() => {
-              if (reportType === "consumption") {
-                return exportFormat === "pdf" 
-                  ? "Download Consumption Report (.pdf)" 
-                  : "Download Consumption Data (.xlsx)";
-              }
-              return "Download Carbon Footprint Report (.pdf)";
-            })()}
+            {isLoading ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+                <div style={{
+                  width: "20px",
+                  height: "20px",
+                  border: "2px solid rgba(255,255,255,0.3)",
+                  borderTop: "2px solid white",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite"
+                }} />
+                Generating Report...
+              </div>
+            ) : (
+              (() => {
+                if (reportType === "consumption") {
+                  const buildingText = selectedBuildingId ? " (Selected Building)" : " (All Buildings)";
+                  return exportFormat === "pdf" 
+                    ? `📑 Download ${getConsumptionTypeLabel(selectedConsumptionType)} Report${buildingText}` 
+                    : `📊 Download ${getConsumptionTypeLabel(selectedConsumptionType)} Data${buildingText}`;
+                }
+                return "🌱 Download Carbon Footprint Report";
+              })()
+            )}
           </button>
         </div>
       </div>

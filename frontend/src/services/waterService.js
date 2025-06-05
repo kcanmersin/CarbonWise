@@ -44,6 +44,110 @@ export const getWaterById = async (id) => {
   }
 };
 
+export const getWaterByBuilding = async (buildingId) => {
+  try {
+    const response = await fetch(`${API_URL}/Waters/building/${buildingId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to fetch water data");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching water data:", error);
+    throw error;
+  }
+};
+
+export const getWaterMonthlyAggregate = async (startDate, endDate) => {
+  try {
+    // Create query string from parameters
+    const queryParams = new URLSearchParams();
+    if (startDate) queryParams.append("startDate", startDate.toISOString());
+    if (endDate) queryParams.append("endDate", endDate.toISOString());
+
+    const response = await fetch(`${API_URL}/Waters/monthly-aggregate?${queryParams}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to fetch monthly aggregate data");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching monthly aggregate data:", error);
+    throw error;
+  }
+};
+
+export const getWaterMonthlyTotals = async (startDate, endDate) => {
+  try {
+    // Create query string from parameters
+    const queryParams = new URLSearchParams();
+    if (startDate) queryParams.append("startDate", startDate.toISOString());
+    if (endDate) queryParams.append("endDate", endDate.toISOString());
+
+    const response = await fetch(`${API_URL}/Waters/monthly-totals?${queryParams}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to fetch monthly totals data");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching monthly totals data:", error);
+    throw error;
+  }
+};
+
+export const filterWaters = async (filterParams) => {
+  try {
+    // Create query string from filter parameters
+    const queryParams = new URLSearchParams();
+    if (filterParams.buildingId) queryParams.append("BuildingId", filterParams.buildingId);
+    if (filterParams.startDate) queryParams.append("StartDate", filterParams.startDate.toISOString());
+    if (filterParams.endDate) queryParams.append("EndDate", filterParams.endDate.toISOString());
+
+    const response = await fetch(`${API_URL}/Waters/filter?${queryParams}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to filter water data");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error filtering water data:", error);
+    throw error;
+  }
+};
+
 export const createWater = async (waterData) => {
   try {
     const response = await fetch(`${API_URL}/Waters`, {
@@ -112,33 +216,6 @@ export const deleteWater = async (id) => {
   }
 };
 
-export const filterWaters = async (filterParams) => {
-  try {
-    // Create query string from filter parameters
-    const queryParams = new URLSearchParams();
-    if (filterParams.startDate) queryParams.append("StartDate", filterParams.startDate.toISOString());
-    if (filterParams.endDate) queryParams.append("EndDate", filterParams.endDate.toISOString());
-
-    const response = await fetch(`${API_URL}/Waters/filter?${queryParams}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
-      }
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || "Failed to filter water data");
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("Error filtering water data:", error);
-    throw error;
-  }
-};
-
 export const waterdownloadSampleExcel = async () => {
   try {
     const response = await fetch(`${API_URL}/Waters/downloadSampleExcel`, {
@@ -188,4 +265,4 @@ export const watersMultipleUpload = async (file) => {
     console.error("Error uploading multiple water records:", error);
     throw error;
   }
-}
+};
