@@ -6,48 +6,50 @@ import {
 } from 'recharts';
 import { getBuildings } from "../services/buildingService";
 import { filterNaturalGas } from "../services/naturalGasService";
+import { getMonthlyTotals } from "../services/naturalGasService";
 
 const NaturalGasPage = () => {
   // State variables
   const [buildings, setBuildings] = useState([]);
   const [selectedBuildingId, setSelectedBuildingId] = useState("");
   const [selectedBuildingIds, setSelectedBuildingIds] = useState([]);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  
+  // Date picker state variables
+  const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), 0, 1)); // Jan 1 of current year
+  const [endDate, setEndDate] = useState(new Date()); // Today
+  
   const [monthlyData, setMonthlyData] = useState([]);
   const [compareData, setCompareData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Available years for selection
-  const availableYears = [2023, 2024, 2025];
   
   // Colors for the charts
   const lineColors = ["#e74c3c", "#c0392b", "#d35400", "#e67e22", "#f39c12", "#f1c40f"];
   
   // Sidebar menu items
   const menuItems = [
-    { name: "Dashboard", key: "dashboard" },
-    { 
-      name: "Resource Monitoring", 
-      key: "resourceMonitoring",
+    { key: "dashboard", name: "Dashboard" },
+    {
+      key: "resource-monitoring",
+      name: "Resource Monitoring",
       subItems: [
-        { name: "Electricity", key: "electricity" },
-        { name: "Water", key: "water" },
-        { name: "Paper", key: "paper" },
-        { name: "Natural Gas", key: "naturalGas" }
+        { key: "electricity", name: "Electricity" },
+        { key: "water", name: "Water" },
+        { key: "paper", name: "Paper" },
+        { key: "naturalGas", name: "Natural Gas" }
       ]
     },
-    { 
-      name: "Carbon Footprint", 
-      key: "carbonFootprint",
+    {
+      key: "carbon-footprint",
+      name: "Carbon Footprint",
       subItems: [
-        { name: "Test", key: "test" },
-        { name: "Calculations", key: "calculations" }
+        { key: "test", name: "Test" },
+        { key: "calculations", name: "Calculations" }
       ]
     },
-    { name: "Predictions", key: "predictions" },
-    { name: "Admin Tools", key: "adminTools" },
-    { name: "Reports", key: "reports" }
+    { key: "predictions", name: "Predictions" },
+    { key: "adminTools", name: "Admin Tools" },
+    { key: "reports", name: "Reports" }
   ];
 
   // Fetch buildings on component mount
@@ -55,23 +57,62 @@ const NaturalGasPage = () => {
     fetchBuildings();
   }, []);
 
-  // Fetch natural gas data when selected building or year changes
+  // Fetch natural gas data when selected building or date range changes
   useEffect(() => {
-    if (selectedBuildingId) {
-      console.log("Selected building ID:", selectedBuildingId);
-      console.log("Selected year:", selectedYear);
-      fetchNaturalGasData(selectedBuildingId, selectedYear);
-    }
-  }, [selectedBuildingId, selectedYear]);
+      if (selectedBuildingIds.length > 0) {
+        console.log("Selected building IDs for comparison:", selectedBuildingIds);
+        console.log("Date range for comparison:", startDate.toDateString(), "to", endDate.toDateString());
+        fetchComparisonData();
+      }
+    }, [selectedBuildingIds, startDate, endDate]);
 
-  // Fetch comparison data when selected buildings or year changes
+  useEffect(() => {
+    if (selectedBuildingId === "all") {
+      // Fetch data for all buildings
+      fetchAllBuildingsData();
+    } else if (selectedBuildingId) {
+      // Fetch data for single building
+      fetchNaturalGasData(selectedBuildingId);
+    }
+  }, [selectedBuildingId, startDate, endDate]);
+
+  // Fetch comparison data when selected buildings or date range changes
   useEffect(() => {
     if (selectedBuildingIds.length > 0) {
       console.log("Selected building IDs for comparison:", selectedBuildingIds);
-      console.log("Selected year for comparison:", selectedYear);
-      fetchComparisonData(selectedYear);
+      console.log("Date range for comparison:", startDate.toDateString(), "to", endDate.toDateString());
+      fetchComparisonData();
     }
-  }, [selectedBuildingIds, selectedYear]);
+  }, [selectedBuildingIds, startDate, endDate]);
+
+  // Format date to YYYY-MM-DD format for date input
+  const formatDateForInput = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Handle date selection
+  const handleStartDateChange = (e) => {
+    const newDate = new Date(e.target.value);
+    if (newDate > endDate) {
+      setStartDate(newDate);
+      setEndDate(newDate);
+    } else {
+      setStartDate(newDate);
+    }
+  };
+  
+  const handleEndDateChange = (e) => {
+    const newDate = new Date(e.target.value);
+    if (newDate < startDate) {
+      setEndDate(newDate);
+      setStartDate(newDate);
+    } else {
+      setEndDate(newDate);
+    }
+  };
 
   // Function to fetch all buildings
   const fetchBuildings = async () => {
@@ -96,15 +137,11 @@ const NaturalGasPage = () => {
     }
   };
 
-  // Function to fetch natural gas data for a specific building and year
-  const fetchNaturalGasData = async (buildingId, year) => {
+  // Function to fetch natural gas data for a specific building and date range
+  const fetchNaturalGasData = async (buildingId) => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      // Set date range for the selected year
-      const startDate = new Date(year, 0, 1);  // January 1st of selected year
-      const endDate = new Date(year, 11, 31);  // December 31st of selected year
       
       console.log("Fetching natural gas data with params:", {
         buildingId,
@@ -131,15 +168,11 @@ const NaturalGasPage = () => {
     }
   };
 
-  // Function to fetch comparison data for multiple buildings and year
-  const fetchComparisonData = async (year) => {
+  // Function to fetch comparison data for multiple buildings and date range
+  const fetchComparisonData = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      // Set date range for the selected year
-      const startDate = new Date(year, 0, 1);  // January 1st of selected year
-      const endDate = new Date(year, 11, 31);  // December 31st of selected year
       
       // Fetch data for each selected building
       const comparisonDataPromises = selectedBuildingIds.map(buildingId => 
@@ -164,25 +197,160 @@ const NaturalGasPage = () => {
     }
   };
 
-  // Process natural gas data from API into chart format
-  const processNaturalGasData = (data) => {
-    // Initialize array for all months
+  // Function to fetch natural gas data for all buildings
+  const fetchAllBuildingsData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      console.log("Fetching all buildings data with date range:", {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString()
+      });
+  
+      const result = await getMonthlyTotals(startDate, endDate);
+      console.log("All buildings data received:", result);
+      
+      // Transform the API data into the chart format
+      const transformedData = processAllBuildingsData(result);
+      setMonthlyData(transformedData);
+    } catch (error) {
+      setError("Failed to fetch all buildings data. Please try again later.");
+      console.error("Error fetching all buildings data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleBuildingChange = (e) => {
+    const buildingId = e.target.value;
+    setSelectedBuildingId(buildingId);
+    
+    // Reset any previous errors
+    setError(null);
+  };
+  
+  // Process all buildings data from API into chart format
+  const processAllBuildingsData = (data) => {
+    // Get all months within the date range
+    const months = [];
+    const startYear = startDate.getFullYear();
+    const startMonth = startDate.getMonth();
+    const endYear = endDate.getFullYear();
+    const endMonth = endDate.getMonth();
+    
+    // Generate all month-year combinations within range
+    for (let year = startYear; year <= endYear; year++) {
+      const monthStart = (year === startYear) ? startMonth : 0;
+      const monthEnd = (year === endYear) ? endMonth : 11;
+      
+      for (let month = monthStart; month <= monthEnd; month++) {
+        months.push({
+          month: getMonthName(month),
+          year: year,
+          monthIndex: month,
+          fullMonth: `${getMonthName(month)} ${year}`
+        });
+      }
+    }
+    
+    // Initialize monthly usage with generated months
+    const monthlyUsage = months.map((monthData) => {
+      return {
+        month: monthData.fullMonth,
+        monthOnly: monthData.month,
+        year: monthData.year,
+        fullMonth: monthData.fullMonth,
+        usage: 0
+      };
+    });
+    
+    // Update with actual data based on your API response format
+    data.forEach(item => {
+      // month is 1-based in the API response, monthIndex is 0-based in our data
+      const month = item.month - 1;
+      const year = item.year;
+      
+      // Find matching month in our array
+      const dataIndex = months.findIndex(m => 
+        m.monthIndex === month && m.year === year
+      );
+      
+      if (dataIndex !== -1) {
+        // FIXED: Use totalSM3Value field instead of totalKWHValue
+        monthlyUsage[dataIndex].usage = item.totalSM3Value;
+      }
+    });
+    
+    return monthlyUsage;
+  };
+
+  // Helper function to get month name
+  const getMonthName = (monthIndex) => {
     const months = [
       "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ];
+    return months[monthIndex];
+  };
+
+  // Process natural gas data from API into chart format
+  const processNaturalGasData = (data) => {
+    // Get all months within the date range
+    const months = [];
+    const startYear = startDate.getFullYear();
+    const startMonth = startDate.getMonth();
+    const endYear = endDate.getFullYear();
+    const endMonth = endDate.getMonth();
     
-    const monthlyUsage = months.map(month => ({
-      month: month,
-      usage: 0
-    }));
+    // Generate all month-year combinations within range
+    for (let year = startYear; year <= endYear; year++) {
+      const monthStart = (year === startYear) ? startMonth : 0;
+      const monthEnd = (year === endYear) ? endMonth : 11;
+      
+      for (let month = monthStart; month <= monthEnd; month++) {
+        months.push({
+          month: getMonthName(month),
+          year: year,
+          monthIndex: month,
+          // Full month-year format for display
+          fullMonth: `${getMonthName(month)} ${year}`
+        });
+      }
+    }
+    
+    // Initialize monthly usage with generated months
+    const monthlyUsage = months.map((monthData) => {
+      return {
+        // Always show month and year for X-axis
+        month: monthData.fullMonth,
+        // For custom X-axis ticks if needed
+        monthOnly: monthData.month,
+        year: monthData.year,
+        // Full label for tooltip
+        fullMonth: monthData.fullMonth,
+        usage: 0
+      };
+    });
     
     // Update with actual data
     data.forEach(record => {
       const date = new Date(record.date);
-      const monthIndex = date.getMonth();
+      // Skip records outside our date range
+      if (date < startDate || date > endDate) return;
       
-      monthlyUsage[monthIndex].usage += record.sM3Value;
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      
+      // Find matching month in our array
+      const monthIndex = months.findIndex(m => 
+        m.month === getMonthName(month) && m.year === year
+      );
+      
+      if (monthIndex !== -1) {
+        // Use sM3Value field from the API response
+        monthlyUsage[monthIndex].usage += record.sM3Value;
+      }
     });
     
     return monthlyUsage;
@@ -190,15 +358,41 @@ const NaturalGasPage = () => {
 
   // Process comparison data from API into chart format
   const processComparisonData = (results, buildingIds) => {
-    // Initialize array for all months
-    const months = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    ];
+    // Get all months within the date range
+    const months = [];
+    const startYear = startDate.getFullYear();
+    const startMonth = startDate.getMonth();
+    const endYear = endDate.getFullYear();
+    const endMonth = endDate.getMonth();
     
-    const monthlyData = months.map(month => ({
-      month: month
-    }));
+    // Generate all month-year combinations within range
+    for (let year = startYear; year <= endYear; year++) {
+      const monthStart = (year === startYear) ? startMonth : 0;
+      const monthEnd = (year === endYear) ? endMonth : 11;
+      
+      for (let month = monthStart; month <= monthEnd; month++) {
+        months.push({
+          month: getMonthName(month),
+          year: year,
+          monthIndex: month,
+          // Full month-year format for display
+          fullMonth: `${getMonthName(month)} ${year}`
+        });
+      }
+    }
+    
+    // Initialize monthly data with generated months
+    const monthlyData = months.map((monthData) => {
+      return {
+        // Always show month and year for X-axis
+        month: monthData.fullMonth,
+        // For custom X-axis ticks if needed
+        monthOnly: monthData.month,
+        year: monthData.year,
+        // Full label for tooltip
+        fullMonth: monthData.fullMonth
+      };
+    });
     
     // Process data for each building
     results.forEach((data, index) => {
@@ -214,9 +408,21 @@ const NaturalGasPage = () => {
       // Update with actual data
       data.forEach(record => {
         const date = new Date(record.date);
-        const monthIndex = date.getMonth();
+        // Skip records outside our date range
+        if (date < startDate || date > endDate) return;
         
-        monthlyData[monthIndex][buildingName] += record.sM3Value;
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        
+        // Find matching month in our array
+        const monthIndex = months.findIndex(m => 
+          m.month === getMonthName(month) && m.year === year
+        );
+        
+        if (monthIndex !== -1) {
+          // Add to the existing value
+          monthlyData[monthIndex][buildingName] += record.sM3Value;
+        }
       });
     });
     
@@ -237,13 +443,6 @@ const NaturalGasPage = () => {
   const handleRemoveBuildingFromComparison = (buildingId) => {
     console.log("Removing building from comparison:", buildingId);
     setSelectedBuildingIds(selectedBuildingIds.filter(id => id !== buildingId));
-  };
-
-  // Handle year selection change
-  const handleYearChange = (e) => {
-    const year = parseInt(e.target.value);
-    console.log("Changing selected year to:", year);
-    setSelectedYear(year);
   };
 
   return (
@@ -308,48 +507,92 @@ const NaturalGasPage = () => {
               boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
               marginBottom: "1rem"
             }}>
-              <h3>Natural Gas Usage Monthly/Yearly Graphs</h3>
+              <h3>
+                {selectedBuildingId === "all" 
+                  ? "Total Natural Gas Usage Across All Buildings" 
+                  : "Natural Gas Usage Graph"}
+              </h3>
               
-              {/* Controls - Building and Year Selection */}
-              <div style={{ marginBottom: "1rem", display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+              {/* Controls - Building Selection and Date Range */}
+              <div style={{ 
+                marginBottom: "1.5rem", 
+                display: "flex", 
+                alignItems: "flex-end", 
+                gap: "1.5rem", 
+                flexWrap: "wrap"
+              }}>
                 <div>
-                  <label htmlFor="buildingSelect" style={{ marginRight: "0.5rem" }}>Building Name:</label>
+                  <label htmlFor="buildingSelect" style={{ 
+                    display: "block", 
+                    marginBottom: "0.25rem", 
+                    fontWeight: "500" 
+                  }}>
+                    Building Name:
+                  </label>
                   <select 
                     id="buildingSelect"
                     value={selectedBuildingId}
-                    onChange={(e) => setSelectedBuildingId(e.target.value)}
+                    onChange={handleBuildingChange}
                     style={{ 
                       padding: "0.5rem", 
                       borderRadius: "4px", 
                       border: "1px solid #ccc",
-                      backgroundColor: "#eee",
-                      minWidth: "200px"
+                      backgroundColor: "#f5f5f5",
+                      minWidth: "250px"
                     }}
                   >
+                    <option value="all">TÜM BİNALAR</option>
                     {buildings.map(building => (
                       <option key={building.id} value={building.id}>{building.name}</option>
                     ))}
                   </select>
                 </div>
                 
+                {/* Date Range Pickers */}
                 <div>
-                  <label htmlFor="yearSelect" style={{ marginRight: "0.5rem" }}>Year:</label>
-                  <select 
-                    id="yearSelect"
-                    value={selectedYear}
-                    onChange={handleYearChange}
+                  <label htmlFor="startDatePicker" style={{ 
+                    display: "block", 
+                    marginBottom: "0.25rem", 
+                    fontWeight: "500" 
+                  }}>
+                    Start Date:
+                  </label>
+                  <input 
+                    type="date"
+                    id="startDatePicker"
+                    value={formatDateForInput(startDate)}
+                    onChange={handleStartDateChange}
                     style={{ 
                       padding: "0.5rem", 
                       borderRadius: "4px", 
                       border: "1px solid #ccc",
-                      backgroundColor: "#eee",
-                      width: "100px"
+                      backgroundColor: "#f5f5f5",
+                      width: "160px"
                     }}
-                  >
-                    {availableYears.map(year => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="endDatePicker" style={{ 
+                    display: "block", 
+                    marginBottom: "0.25rem", 
+                    fontWeight: "500" 
+                  }}>
+                    End Date:
+                  </label>
+                  <input 
+                    type="date"
+                    id="endDatePicker"
+                    value={formatDateForInput(endDate)}
+                    onChange={handleEndDateChange}
+                    style={{ 
+                      padding: "0.5rem", 
+                      borderRadius: "4px", 
+                      border: "1px solid #ccc",
+                      backgroundColor: "#f5f5f5",
+                      width: "160px"
+                    }}
+                  />
                 </div>
               </div>
               
@@ -358,17 +601,27 @@ const NaturalGasPage = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={monthlyData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 30 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
+                    <XAxis 
+                      dataKey="fullMonth" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
                     <YAxis />
-                    <Tooltip formatter={(value) => `${value.toFixed(2)} m³`} />
+                    <Tooltip 
+                      formatter={(value) => `${value.toFixed(2)} m³`}
+                      labelFormatter={(label) => {
+                        return label; // Full month-year is already in the label
+                      }}
+                    />
                     <Legend />
                     <Bar 
                       dataKey="usage" 
                       fill="#ff851b" 
-                      name={`Natural Gas Usage ${selectedYear} (m³)`}
+                      name="Natural Gas Usage (m³)"
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -396,7 +649,7 @@ const NaturalGasPage = () => {
                       padding: "0.5rem", 
                       borderRadius: "4px", 
                       border: "1px solid #ccc",
-                      backgroundColor: "#eee",
+                      backgroundColor: "#f5f5f5",
                       minWidth: "200px"
                     }}
                   >
@@ -410,24 +663,15 @@ const NaturalGasPage = () => {
                   </select>
                 </div>
                 
-                <div>
-                  <label htmlFor="compareYearSelect" style={{ marginRight: "0.5rem" }}>Year:</label>
-                  <select 
-                    id="compareYearSelect"
-                    value={selectedYear}
-                    onChange={handleYearChange}
-                    style={{ 
-                      padding: "0.5rem", 
-                      borderRadius: "4px", 
-                      border: "1px solid #ccc",
-                      backgroundColor: "#eee",
-                      width: "100px"
-                    }}
-                  >
-                    {availableYears.map(year => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
+                {/* Display current date range for reference */}
+                <div style={{
+                  backgroundColor: "#f0f9ff",
+                  padding: "0.5rem",
+                  borderRadius: "4px",
+                  border: "1px solid #d0e3ff",
+                  fontSize: "0.9rem"
+                }}>
+                  Date Range: {formatDateForInput(startDate)} to {formatDateForInput(endDate)}
                 </div>
               </div>
               
@@ -493,12 +737,22 @@ const NaturalGasPage = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
                     data={compareData}
-                    margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                    margin={{ top: 10, right: 30, left: 0, bottom: 30 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
+                    <XAxis 
+                      dataKey="fullMonth" 
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
                     <YAxis />
-                    <Tooltip formatter={(value) => `${value.toFixed(2)} m³`} />
+                    <Tooltip 
+                      formatter={(value) => `${value.toFixed(2)} m³`}
+                      labelFormatter={(label) => {
+                        return label; // Full month-year is already in the label
+                      }}
+                    />
                     <Legend />
                     {buildings
                       .filter(building => selectedBuildingIds.includes(building.id))

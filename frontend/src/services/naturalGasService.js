@@ -166,3 +166,54 @@ export const deleteNaturalGasRecord = async (id) => {
     throw error;
   }
 };
+
+export const naturalGasdownloadSampleExcel = async () => {
+  try {
+    const response = await fetch(`${API_URL}/NaturalGas/downloadSampleExcel`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // if using authentication
+      },
+    });
+    
+    if (!response.ok) throw new Error('Failed to download template');
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `NaturalGas_Template.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error(`Failed to download natural gas template: ${err.message}`);
+    throw err; // Rethrow the error for further handling if needed
+  }
+};
+
+export const naturalGasMultipleUpload = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${API_URL}/NaturalGas/multiple`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to upload multiple natural gas records");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error uploading multiple natural gas records:", error);
+    throw error;
+  }
+}

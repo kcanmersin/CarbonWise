@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../components/Sidebar";
 import { 
-  PieChart, Pie, Cell, Legend, ResponsiveContainer, Tooltip 
+  PieChart, Pie, Cell, Legend, ResponsiveContainer, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
-import { calculateCarbonFootprint } from "../services/carbonFootprintService";
+import { calculateCarbonFootprint, getHistoricalFootprint } from "../services/carbonFootprintService";
 
 const CarbonFootprintCalculations = () => {
   // State variables
@@ -16,6 +17,7 @@ const CarbonFootprintCalculations = () => {
   });
   
   const [resultsData, setResultsData] = useState(null);
+  const [historicalData, setHistoricalData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -25,29 +27,42 @@ const CarbonFootprintCalculations = () => {
   
   // Sidebar menu items
   const menuItems = [
-    { name: "Dashboard", key: "dashboard" },
-    { 
-      name: "Resource Monitoring", 
-      key: "resourceMonitoring",
+    { key: "dashboard", name: "Dashboard" },
+    {
+      key: "resource-monitoring",
+      name: "Resource Monitoring",
       subItems: [
-        { name: "Electricity", key: "electricity" },
-        { name: "Water", key: "water" },
-        { name: "Paper", key: "paper" },
-        { name: "Natural Gas", key: "naturalGas" }
+        { key: "electricity", name: "Electricity" },
+        { key: "water", name: "Water" },
+        { key: "paper", name: "Paper" },
+        { key: "naturalGas", name: "Natural Gas" }
       ]
     },
-    { 
-      name: "Carbon Footprint", 
-      key: "carbonFootprint",
+    {
+      key: "carbon-footprint",
+      name: "Carbon Footprint",
       subItems: [
-        { name: "Test", key: "test" },
-        { name: "Calculations", key: "calculations" }
+        { key: "test", name: "Test" },
+        { key: "calculations", name: "Calculations" }
       ]
     },
-    { name: "Predictions", key: "predictions" },
-    { name: "Admin Tools", key: "adminTools" },
-    { name: "Reports", key: "reports" }
+    { key: "predictions", name: "Predictions" },
+    { key: "adminTools", name: "Admin Tools" },
+    { key: "reports", name: "Reports" }
   ];
+
+  // Fetch historical data when results are submitted
+  useEffect(() => {
+    if (isSubmitted) {
+      fetchHistoricalData();
+    }
+  }, [
+    isSubmitted, 
+    formData.electricityFactor, 
+    formData.shuttleBusFactor, 
+    formData.carFactor, 
+    formData.motorcycleFactor
+  ]);
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -56,6 +71,87 @@ const CarbonFootprintCalculations = () => {
       ...formData,
       [name]: name === 'year' ? parseInt(value) : parseFloat(value)
     });
+  };
+
+ // Fetch historical carbon footprint data
+  const fetchHistoricalData = async () => {
+    try {
+      setIsLoading(true);
+      
+      const factors = {
+        electricityFactor: formData.electricityFactor,
+        shuttleBusFactor: formData.shuttleBusFactor,
+        carFactor: formData.carFactor,
+        motorcycleFactor: formData.motorcycleFactor
+      };
+      
+      console.log("Fetching historical data with factors:", factors);
+      
+      // Call API to get historical data
+      const historicalData = await getHistoricalFootprint(factors);
+      console.log("Raw historical data from API:", historicalData);
+      
+      // Check if we received valid data
+      if (!historicalData || !Array.isArray(historicalData)) {
+        console.error("Invalid historical data format:", historicalData);
+        return;
+      }
+      
+      // Process the data for the chart
+      const processedData = processHistoricalData(historicalData);
+      console.log("Processed historical data for chart:", processedData);
+      
+      setHistoricalData(processedData);
+    } catch (error) {
+      console.error("Error fetching historical carbon footprint data:", error);
+      // Don't show error for historical data, just log it
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Process historical data for the chart
+  const processHistoricalData = (data) => {
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - 4;
+    
+    // Group data by year
+    const yearGroups = {};
+    
+    // Initialize year groups for the past 5 years (including current year)
+    for (let year = startYear; year <= currentYear; year++) {
+      yearGroups[year] = {
+        year,
+        electricity: 0,
+        shuttleBus: 0,
+        car: 0,
+        motorcycle: 0,
+        total: 0
+      };
+    }
+    
+    // Process the API data
+    if (Array.isArray(data)) {
+      data.forEach(item => {
+        // Use the year field directly from the item
+        const year = item.year;
+        
+        // Skip if the year is outside our range
+        if (year < startYear || year > currentYear) return;
+        
+        // Add to the appropriate year group
+        if (yearGroups[year]) {
+          yearGroups[year].electricity = item.electricityEmission || 0;
+          yearGroups[year].shuttleBus = item.shuttleBusEmission || 0;
+          yearGroups[year].car = item.carEmission || 0;
+          yearGroups[year].motorcycle = item.motorcycleEmission || 0;
+          yearGroups[year].total = item.totalEmission || 0;
+        }
+      });
+    }
+    
+    // Convert to array and sort by year
+    return Object.values(yearGroups).sort((a, b) => a.year - b.year);
   };
 
   // Handle form submission
@@ -133,6 +229,7 @@ const CarbonFootprintCalculations = () => {
     setResultsData(null);
     setIsSubmitted(false);
     setError(null);
+    setHistoricalData([]);
   };
 
   // Prepare data for pie chart
@@ -468,6 +565,48 @@ const CarbonFootprintCalculations = () => {
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+          
+          {/* Historical Data Chart */}
+          {isSubmitted && historicalData.length > 0 && (
+            <div style={{ 
+              backgroundColor: "#fff", 
+              padding: "1rem", 
+              borderRadius: "4px", 
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+            }}>
+              <h3>Historical Carbon Footprint (Last 5 Years)</h3>
+              
+              <div style={{ height: "400px" }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={historicalData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 30 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="year" />
+                    <YAxis 
+                      label={{ 
+                        value: 'Carbon Emissions (kg CO₂e)', 
+                        angle: -90, 
+                        position: 'insideLeft',
+                        style: { textAnchor: 'middle' }
+                      }} 
+                    />
+                    <Tooltip formatter={(value) => `${value.toFixed(2)} kg CO₂e`} />
+                    <Legend />
+                    <Bar dataKey="electricity" name="Electricity" fill="#0088FE" stackId="a" />
+                    <Bar dataKey="shuttleBus" name="Shuttle Bus" fill="#00C49F" stackId="a" />
+                    <Bar dataKey="car" name="Car" fill="#FFBB28" stackId="a" />
+                    <Bar dataKey="motorcycle" name="Motorcycle" fill="#FF8042" stackId="a" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              
+              <div style={{ marginTop: "1rem", fontSize: "0.9rem", color: "#666", textAlign: "center" }}>
+                <p>This chart shows the total carbon footprint breakdown for the past 5 years.</p>
               </div>
             </div>
           )}

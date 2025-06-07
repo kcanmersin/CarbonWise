@@ -112,17 +112,14 @@ export const deletePaper = async (id) => {
   }
 };
 
-export const filterPapers = async (startDate, endDate) => {
+export const filterPapers = async (filterParams) => {
   try {
-    let url = `${API_URL}/Papers/filter?`;
-    if (startDate) {
-      url += `startDate=${startDate.toISOString()}`;
-    }
-    if (endDate) {
-      url += `${startDate ? '&' : ''}endDate=${endDate.toISOString()}`;
-    }
+    // Create query string from filter parameters
+    const queryParams = new URLSearchParams();
+    if (filterParams.startDate) queryParams.append("StartDate", filterParams.startDate.toISOString());
+    if (filterParams.endDate) queryParams.append("EndDate", filterParams.endDate.toISOString());
 
-    const response = await fetch(url, {
+    const response = await fetch(`${API_URL}/Papers/filter?${queryParams}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -132,12 +129,12 @@ export const filterPapers = async (startDate, endDate) => {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || "Failed to filter paper records");
+      throw new Error(error.error || "Failed to filter paper data");
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Error filtering paper records:", error);
+    console.error("Error filtering paper data:", error);
     throw error;
   }
 };
@@ -163,6 +160,57 @@ export const getMonthlyPaperUsage = async (year) => {
     return await response.json();
   } catch (error) {
     console.error("Error fetching monthly paper usage:", error);
+    throw error;
+  }
+};
+
+export const papersdownloadSampleExcel = async () => {
+  try {
+    const response = await fetch(`${API_URL}/Papers/downloadSampleExcel`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // if using authentication
+      },
+    });
+    
+    if (!response.ok) throw new Error('Failed to download template');
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Papers_Template.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Error downloading sample Excel template:", err);
+    throw err;
+  }
+};
+
+export const papersMultipleUpload = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${API_URL}/Papers/multiple`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to upload multiple paper records");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error uploading multiple paper records:", error);
     throw error;
   }
 };

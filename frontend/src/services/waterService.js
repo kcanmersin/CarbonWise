@@ -112,17 +112,14 @@ export const deleteWater = async (id) => {
   }
 };
 
-export const filterWaters = async (startDate, endDate) => {
+export const filterWaters = async (filterParams) => {
   try {
-    let url = `${API_URL}/Waters/filter?`;
-    if (startDate) {
-      url += `startDate=${startDate.toISOString()}`;
-    }
-    if (endDate) {
-      url += `${startDate ? '&' : ''}endDate=${endDate.toISOString()}`;
-    }
+    // Create query string from filter parameters
+    const queryParams = new URLSearchParams();
+    if (filterParams.startDate) queryParams.append("StartDate", filterParams.startDate.toISOString());
+    if (filterParams.endDate) queryParams.append("EndDate", filterParams.endDate.toISOString());
 
-    const response = await fetch(url, {
+    const response = await fetch(`${API_URL}/Waters/filter?${queryParams}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -132,12 +129,63 @@ export const filterWaters = async (startDate, endDate) => {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error || "Failed to filter water records");
+      throw new Error(error.error || "Failed to filter water data");
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Error filtering water records:", error);
+    console.error("Error filtering water data:", error);
     throw error;
   }
 };
+
+export const waterdownloadSampleExcel = async () => {
+  try {
+    const response = await fetch(`${API_URL}/Waters/downloadSampleExcel`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`, // if using authentication
+      },
+    });
+    
+    if (!response.ok) throw new Error('Failed to download template');
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Waters_Template.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Error downloading sample Excel template:", err);
+    throw err;
+  }
+};
+
+export const watersMultipleUpload = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await fetch(`${API_URL}/Waters/multiple`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || "Failed to upload multiple water records");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error uploading multiple water records:", error);
+    throw error;
+  }
+}
