@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { loginUser } from "../services/authService";
+import React, { useState, useEffect } from "react";
+import { loginUser, redirectToOAuthLogin, handleOAuthCallbackPost } from "../services/authService";
 
 function LoginPage({ onLoginSuccess }) {
   const [username, setUsername] = useState("");
@@ -7,6 +7,86 @@ function LoginPage({ onLoginSuccess }) {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isOAuthLoading, setIsOAuthLoading] = useState(false);
+
+  // Handle OAuth callback when component mounts
+  useEffect(() => {
+    const handleOAuthFlow = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+      const error = urlParams.get('error');
+      const errorDescription = urlParams.get('error_description');
+      
+      // Debug: Log all URL parameters
+      console.log('All URL parameters:');
+      for (const [key, value] of urlParams.entries()) {
+        console.log(`  ${key}: ${value}`);
+      }
+      
+      // Debug: Log the raw search string
+      console.log('Raw URL search string:', window.location.search);
+      console.log('Full URL:', window.location.href);
+      
+      console.log('OAuth callback detected:', { code, state, error, errorDescription });
+      console.log('Current URL:', window.location.href);
+      
+      // Check if we have any OAuth-related parameters at all
+      const hasOAuthParams = urlParams.has('code') || urlParams.has('state') || urlParams.has('error') || 
+                           urlParams.has('access_token') || urlParams.has('id_token') || 
+                           urlParams.has('token') || urlParams.has('authorization_code');
+      
+      console.log('Has OAuth parameters:', hasOAuthParams);
+      
+      // Handle OAuth error first
+      if (error) {
+        setError(`OAuth Error: ${error}${errorDescription ? ` - ${errorDescription}` : ''}`);
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      }
+      
+      if (code && state) {
+        try {
+          setIsOAuthLoading(true);
+          setError("");
+          
+          console.log('Processing OAuth callback with code:', code.substring(0, 10) + '...', 'and state:', state);
+          
+          // Handle OAuth callback
+          const userData = await handleOAuthCallbackPost(code, state);
+          
+          console.log('OAuth callback successful, user data received:', userData);
+          
+          // Clean up URL parameters
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          // Notify parent of successful login
+          onLoginSuccess(userData);
+        } catch (err) {
+          console.error('OAuth callback error:', err);
+          setError(err.message || "OAuth login failed. Please try again.");
+          // Clean up URL parameters even on error
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } finally {
+          setIsOAuthLoading(false);
+        }
+      } else if (hasOAuthParams) {
+        // We have some OAuth params but not the expected ones
+        console.warn('OAuth callback detected but missing expected parameters');
+        console.warn('Expected: code and state');
+        console.warn('Received parameters:', Object.fromEntries(urlParams.entries()));
+        setError("OAuth response missing required parameters. The GTU OAuth system may be configured differently than expected.");
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (window.location.search.includes('oauth') || window.location.search.includes('callback')) {
+        // URL suggests OAuth but no recognizable parameters
+        console.warn('URL suggests OAuth callback but no OAuth parameters found');
+        setError("OAuth callback detected but no parameters found. Please try again.");
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    };
+
+    handleOAuthFlow();
+  }, [onLoginSuccess]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,6 +110,19 @@ function LoginPage({ onLoginSuccess }) {
       setError(err.message || "Login failed. Please check your credentials.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleOAuthLogin = async () => {
+    try {
+      setIsOAuthLoading(true);
+      setError("");
+      
+      // Redirect to OAuth login
+      await redirectToOAuthLogin();
+    } catch (err) {
+      setError(err.message || "Failed to initiate OAuth login. Please try again.");
+      setIsOAuthLoading(false);
     }
   };
 
@@ -97,6 +190,32 @@ function LoginPage({ onLoginSuccess }) {
             Gebze Technical University Resource Management System
           </h1>
         </div>
+
+        {/* OAuth Loading Message */}
+        {isOAuthLoading && (
+          <div style={{
+            padding: "1rem",
+            marginBottom: "1.5rem",
+            background: "linear-gradient(135deg, #4CAF50, #45a049)",
+            color: "white",
+            borderRadius: "12px",
+            fontSize: "0.9rem",
+            fontWeight: "500",
+            boxShadow: "0 4px 15px rgba(76, 175, 80, 0.3)"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+              <div style={{
+                width: "16px",
+                height: "16px",
+                border: "2px solid rgba(255,255,255,0.3)",
+                borderTop: "2px solid white",
+                borderRadius: "50%",
+                animation: "spin 1s linear infinite"
+              }} />
+              Processing login...
+            </div>
+          </div>
+        )}
         
         {/* Error Message */}
         {error && (
@@ -116,6 +235,70 @@ function LoginPage({ onLoginSuccess }) {
             </div>
           </div>
         )}
+
+        {/* OAuth Login Button */}
+        <button
+          onClick={handleOAuthLogin}
+          disabled={isOAuthLoading || isLoading}
+          style={{
+            width: "100%",
+            padding: "1rem",
+            background: isOAuthLoading || isLoading ? "#94a3b8" : "linear-gradient(135deg, #4CAF50, #45a049)",
+            color: "white",
+            border: "none",
+            borderRadius: "12px",
+            fontSize: "1rem",
+            fontWeight: "600",
+            cursor: isOAuthLoading || isLoading ? "not-allowed" : "pointer",
+            transition: "all 0.3s ease",
+            boxShadow: isOAuthLoading || isLoading ? "none" : "0 4px 15px rgba(76, 175, 80, 0.4)",
+            marginBottom: "1.5rem"
+          }}
+          onMouseEnter={(e) => {
+            if (!isOAuthLoading && !isLoading) {
+              e.target.style.transform = "translateY(-2px)";
+              e.target.style.boxShadow = "0 8px 25px rgba(76, 175, 80, 0.4)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isOAuthLoading && !isLoading) {
+              e.target.style.transform = "translateY(0)";
+              e.target.style.boxShadow = "0 4px 15px rgba(76, 175, 80, 0.4)";
+            }
+          }}
+        >
+          {isOAuthLoading ? (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+              <div style={{
+                width: "20px",
+                height: "20px",
+                border: "2px solid rgba(255,255,255,0.3)",
+                borderTop: "2px solid white",
+                borderRadius: "50%",
+                animation: "spin 1s linear infinite"
+              }} />
+              Redirecting...
+            </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
+              <span>🎓</span>
+              Sign in with GTU Account
+            </div>
+          )}
+        </button>
+
+        {/* Divider */}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          margin: "1.5rem 0",
+          color: "#6c757d",
+          fontSize: "0.9rem"
+        }}>
+          <div style={{ flex: 1, height: "1px", background: "#e9ecef" }} />
+          <span style={{ padding: "0 1rem" }}>or continue with username</span>
+          <div style={{ flex: 1, height: "1px", background: "#e9ecef" }} />
+        </div>
         
         {/* Login Form */}
         <form onSubmit={handleSubmit}>
@@ -137,6 +320,7 @@ function LoginPage({ onLoginSuccess }) {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter your username"
+                disabled={isOAuthLoading}
                 style={{
                   width: "100%",
                   padding: "1rem 1rem 1rem 3rem",
@@ -144,13 +328,16 @@ function LoginPage({ onLoginSuccess }) {
                   borderRadius: "12px",
                   fontSize: "1rem",
                   transition: "all 0.3s ease",
-                  background: "rgba(255, 255, 255, 0.8)",
+                  background: isOAuthLoading ? "#f8f9fa" : "rgba(255, 255, 255, 0.8)",
                   boxSizing: "border-box",
-                  outline: "none"
+                  outline: "none",
+                  opacity: isOAuthLoading ? 0.6 : 1
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = "#667eea";
-                  e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                  if (!isOAuthLoading) {
+                    e.target.style.borderColor = "#667eea";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                  }
                 }}
                 onBlur={(e) => {
                   e.target.style.borderColor = "#e9ecef";
@@ -188,6 +375,7 @@ function LoginPage({ onLoginSuccess }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
+                disabled={isOAuthLoading}
                 style={{
                   width: "100%",
                   padding: "1rem 3rem 1rem 3rem",
@@ -195,13 +383,16 @@ function LoginPage({ onLoginSuccess }) {
                   borderRadius: "12px",
                   fontSize: "1rem",
                   transition: "all 0.3s ease",
-                  background: "rgba(255, 255, 255, 0.8)",
+                  background: isOAuthLoading ? "#f8f9fa" : "rgba(255, 255, 255, 0.8)",
                   boxSizing: "border-box",
-                  outline: "none"
+                  outline: "none",
+                  opacity: isOAuthLoading ? 0.6 : 1
                 }}
                 onFocus={(e) => {
-                  e.target.style.borderColor = "#667eea";
-                  e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                  if (!isOAuthLoading) {
+                    e.target.style.borderColor = "#667eea";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(102, 126, 234, 0.1)";
+                  }
                 }}
                 onBlur={(e) => {
                   e.target.style.borderColor = "#e9ecef";
@@ -221,6 +412,7 @@ function LoginPage({ onLoginSuccess }) {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                disabled={isOAuthLoading}
                 style={{
                   position: "absolute",
                   right: "1rem",
@@ -229,9 +421,10 @@ function LoginPage({ onLoginSuccess }) {
                   background: "none",
                   border: "none",
                   color: "#6c757d",
-                  cursor: "pointer",
+                  cursor: isOAuthLoading ? "not-allowed" : "pointer",
                   fontSize: "1.1rem",
-                  padding: "0.25rem"
+                  padding: "0.25rem",
+                  opacity: isOAuthLoading ? 0.6 : 1
                 }}
               >
                 {showPassword ? "🙈" : "👁️"}
@@ -242,28 +435,28 @@ function LoginPage({ onLoginSuccess }) {
           {/* Login Button */}
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isOAuthLoading}
             style={{
               width: "100%",
               padding: "1rem",
-              background: isLoading ? "#94a3b8" : "linear-gradient(135deg, #667eea, #764ba2)",
+              background: isLoading || isOAuthLoading ? "#94a3b8" : "linear-gradient(135deg, #667eea, #764ba2)",
               color: "white",
               border: "none",
               borderRadius: "12px",
               fontSize: "1rem",
               fontWeight: "600",
-              cursor: isLoading ? "not-allowed" : "pointer",
+              cursor: isLoading || isOAuthLoading ? "not-allowed" : "pointer",
               transition: "all 0.3s ease",
-              boxShadow: isLoading ? "none" : "0 4px 15px rgba(102, 126, 234, 0.4)"
+              boxShadow: isLoading || isOAuthLoading ? "none" : "0 4px 15px rgba(102, 126, 234, 0.4)"
             }}
             onMouseEnter={(e) => {
-              if (!isLoading) {
+              if (!isLoading && !isOAuthLoading) {
                 e.target.style.transform = "translateY(-2px)";
                 e.target.style.boxShadow = "0 8px 25px rgba(102, 126, 234, 0.4)";
               }
             }}
             onMouseLeave={(e) => {
-              if (!isLoading) {
+              if (!isLoading && !isOAuthLoading) {
                 e.target.style.transform = "translateY(0)";
                 e.target.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.4)";
               }
