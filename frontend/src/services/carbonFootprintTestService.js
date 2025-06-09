@@ -23,6 +23,9 @@ export const startCarbonFootprintTest = async () => {
     },
   });
 
+  // print the response for debugging
+  console.log("Start test response:", response);
+
   if (!response.ok) {
     throw new Error("Failed to start test");
   }

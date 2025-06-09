@@ -27,7 +27,7 @@ namespace CarbonWise.API.Services
 
         private readonly string authorizationEndpoint = "https://kampus.gtu.edu.tr/oauth/yetki";
         private readonly string tokenEndpoint = "https://kampus.gtu.edu.tr/oauth/dogrulama";
-        private readonly string queryServerAddress = "https://kampus.gtu.edu.tr/oauth/sorgulama";
+        private readonly string queryServerAddress = "https://kampus.gtu.edu.tr/oauth/sorgu";
 
         public OAuthService(
             IUserRepository userRepository,
@@ -113,9 +113,9 @@ namespace CarbonWise.API.Services
             var gender = userInfo["cinsiyet"]?.ToString() ?? "Other";
             var uniqueId = userInfo["tc_kimlik_no"]?.ToString() ?? userEmail;
 
-            bool isStudent = userInfo["ogrenci_mi"]?.ToObject<bool>() ?? false;
-            bool isAcademicPersonal = userInfo["akademik_personel_mi"]?.ToObject<bool>() ?? false;
-            bool isAdministrativeStaff = userInfo["idari_personel_mi"]?.ToObject<bool>() ?? false;
+            bool isStudent = userInfo["ogrenci"]?.ToObject<bool>() ?? false;
+            bool isAcademicPersonal = userInfo["akademik_personel"]?.ToObject<bool>() ?? false;
+            bool isAdministrativeStaff = userInfo["idari_personel"]?.ToObject<bool>() ?? false;
             bool isInInstitution = isStudent || isAcademicPersonal || isAdministrativeStaff;
 
             if (string.IsNullOrEmpty(userEmail))
@@ -191,10 +191,14 @@ namespace CarbonWise.API.Services
         {
             using var sha256 = SHA256.Create();
             var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(codeVerifier));
-            return Convert.ToBase64String(hashBytes)
-                .TrimEnd('=')
-                .Replace('+', '-')
-                .Replace('/', '_');
+            
+            // Use standard Base64 encoding (not Base64URL)
+            var base64String = Convert.ToBase64String(hashBytes);
+            
+            // Apply percent encoding as required by GTÜ documentation
+            var percentEncoded = Uri.EscapeDataString(base64String);
+            
+            return percentEncoded;
         }
     }
 

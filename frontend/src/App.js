@@ -48,7 +48,7 @@ function App() {
   // Protected route component
   const ProtectedRoute = ({ children }) => {
     if (!isLoggedIn) {
-      return <Navigate to="/login" />;
+      return <Navigate to="/auth" />;
     }
     return children;
   };
@@ -63,7 +63,7 @@ function App() {
         
         <Routes>
           <Route 
-            path="/login" 
+            path="/auth" 
             element={
               isLoggedIn ? 
                 <Navigate to="/" /> : 
