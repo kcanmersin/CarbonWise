@@ -38,7 +38,9 @@ using CarbonWise.BuildingBlocks.Application.Jobs;
 using CarbonWise.BuildingBlocks.Application.Services.AirQuality;
 using CarbonWise.BuildingBlocks.Domain.AirQuality;
 using CarbonWise.BuildingBlocks.Infrastructure.AirQuality;
-using CarbonWise.API.Services; // Add this using statement for IOAuthService
+
+using CarbonWise.BuildingBlocks.Application.Services.AI;
+using CarbonWise.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,7 +56,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
     )
 );
-
+builder.Services.AddMemoryCache();
 // Configure JWT authentication
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.AddAuthentication(options =>
@@ -94,6 +96,8 @@ builder.Services.AddScoped<IElectricRepository, ElectricRepository>();
 builder.Services.AddScoped<INaturalGasRepository, NaturalGasRepository>();
 builder.Services.AddScoped<IPaperRepository, PaperRepository>();
 builder.Services.AddScoped<IWaterRepository, WaterRepository>();
+builder.Services.AddScoped<IAIService, AIService>();
+builder.Services.AddScoped<IOAuthService, OAuthService>();
 
 // Register Carbon Footprint Test repositories
 builder.Services.AddScoped<ICarbonFootprintTestRepository, CarbonFootprintTestRepository>();
