@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using CarbonWise.BuildingBlocks.Domain.Users;
 using Microsoft.EntityFrameworkCore;
