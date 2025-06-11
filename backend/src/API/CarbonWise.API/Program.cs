@@ -43,8 +43,10 @@ using CarbonWise.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 builder.Services.AddControllers();
 
+builder.Services.AddMemoryCache(); 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options => options.ConfigureSwaggerOptions());
 
@@ -95,7 +97,6 @@ builder.Services.AddScoped<IWaterRepository, WaterRepository>();
 builder.Services.AddScoped<IAIService, AIService>();
 builder.Services.AddScoped<IOAuthService, OAuthService>();
 
-// Register Carbon Footprint Test repositories
 builder.Services.AddScoped<IOAuthService, OAuthService>();
 builder.Services.AddScoped<ICarbonFootprintTestRepository, CarbonFootprintTestRepository>();
 builder.Services.AddScoped<ITestQuestionRepository, TestQuestionRepository>();
