@@ -3,6 +3,7 @@ using CarbonWise.BuildingBlocks.Domain.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace CarbonWise.API.Controller
 {
@@ -28,11 +29,11 @@ namespace CarbonWise.API.Controller
         [Authorize]
         public async Task<IActionResult> StartTest()
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-
-            if (!Guid.TryParse(User.FindFirst("sub")?.Value, out Guid userId))
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out Guid userId))
             {
-                return Unauthorized();
+                return Unauthorized("Unable to determine user identity from token");
             }
 
             var test = await _testService.StartNewTestAsync(userId);
@@ -40,10 +41,9 @@ namespace CarbonWise.API.Controller
         }
 
         [HttpPost("{testId}/response")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> SaveResponse(Guid testId, [FromBody] SaveResponseRequest request)
         {
-
             try
             {
                 var test = await _testService.SaveResponseAsync(testId, request.QuestionId, request.OptionId);
@@ -56,7 +56,7 @@ namespace CarbonWise.API.Controller
         }
 
         [HttpPost("{testId}/complete")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> CompleteTest(Guid testId)
         {
             try
@@ -68,6 +68,13 @@ namespace CarbonWise.API.Controller
             {
                 return NotFound(new { error = ex.Message });
             }
+        }
+
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetSustainabilityStats()
+        {
+            var stats = await _testService.GetSustainabilityStatsAsync();
+            return Ok(stats);
         }
     }
 

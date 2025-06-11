@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using CarbonWise.BuildingBlocks.Domain.Users;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,21 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Users
             return await _dbContext.Users
                 .Where(u => u.Email == email)
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<List<User>> GetAllAsync()
+        {
+            return await _dbContext.Users
+                .OrderBy(u => u.Username)
+                .ToListAsync();
+        }
+
+        public async Task<List<User>> GetByRoleAsync(UserRole role)
+        {
+            return await _dbContext.Users
+                .Where(u => u.Role == role)
+                .OrderBy(u => u.Username)
+                .ToListAsync();
         }
 
         public async Task AddAsync(User user)
