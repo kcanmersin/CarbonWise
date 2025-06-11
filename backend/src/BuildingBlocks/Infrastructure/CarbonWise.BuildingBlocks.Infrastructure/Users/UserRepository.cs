@@ -33,6 +33,21 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Users
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<List<User>> GetAllAsync()
+        {
+            return await _dbContext.Users
+                .OrderBy(u => u.Username)
+                .ToListAsync();
+        }
+
+        public async Task<List<User>> GetByRoleAsync(UserRole role)
+        {
+            return await _dbContext.Users
+                .Where(u => u.Role == role)
+                .OrderBy(u => u.Username)
+                .ToListAsync();
+        }
+
         public async Task AddAsync(User user)
         {
             await _dbContext.Users.AddAsync(user);
