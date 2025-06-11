@@ -84,5 +84,65 @@ namespace CarbonWise.API.Controllers
                 return BadRequest(new { error = ex.Message });
             }
         }
+
+        [HttpGet("comparison")]
+        public async Task<IActionResult> GetYearComparison([FromQuery] ComparisonRequest request)
+        {
+            try
+            {
+                var comparison = await _carbonFootprintService.GetYearComparisonAsync(
+                    request.ElectricityFactor,
+                    request.ShuttleBusFactor,
+                    request.CarFactor,
+                    request.MotorcycleFactor);
+
+                return Ok(comparison);
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboardData([FromQuery] ComparisonRequest request)
+        {
+            try
+            {
+                var comparison = await _carbonFootprintService.GetYearComparisonAsync(
+                    request.ElectricityFactor,
+                    request.ShuttleBusFactor,
+                    request.CarFactor,
+                    request.MotorcycleFactor);
+
+                var dashboardData = new
+                {
+                    Title = "Carbon Footprint Dashboard",
+                    LastUpdated = DateTime.Now,
+                    YearComparison = comparison,
+                    Summary = new
+                    {
+                        CurrentYearTotal = comparison.CurrentYearData?.TotalEmission ?? 0,
+                        PreviousYearTotal = comparison.PreviousYearData?.TotalEmission ?? 0,
+                        HasImproved = comparison.Comparison?.IsImprovement ?? false,
+                        ChangePercentage = comparison.Comparison?.TotalEmissionChangePercentage ?? 0
+                    }
+                };
+
+                return Ok(dashboardData);
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+    }
+
+    public class ComparisonRequest
+    {
+        public decimal? ElectricityFactor { get; set; }
+        public decimal? ShuttleBusFactor { get; set; }
+        public decimal? CarFactor { get; set; }
+        public decimal? MotorcycleFactor { get; set; }
     }
 }
