@@ -25,16 +25,15 @@ namespace CarbonWise.API.Controller
         }
 
         [HttpPost("start")]
-        //[Authorize]
+        [Authorize]
         public async Task<IActionResult> StartTest()
         {
 
 
-            //if (!Guid.TryParse(User.FindFirst("sub")?.Value, out Guid userId))
-            //{
-            //    return Unauthorized();
-            //}
-            Guid userId = new Guid("96aa7bd4-159e-4b3d-842f-2c31564ca690");
+            if (!Guid.TryParse(User.FindFirst("sub")?.Value, out Guid userId))
+            {
+                return Unauthorized();
+            }
 
             var test = await _testService.StartNewTestAsync(userId);
             return Ok(test);
