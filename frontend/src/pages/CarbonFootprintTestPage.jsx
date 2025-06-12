@@ -24,7 +24,8 @@ const menuItems = [
     ]
   },
   { key: "predictions", name: "Predictions" },
-  { key: "adminTools", name: "Admin Tools" },
+  { key: "userManagement", name: "User Management" }, // 👈 NEW ITEM
+  { key: "adminTools", name: "Admin Tools" },         // 👈 KEPT ORIGINAL
   { key: "reports", name: "Reports" }
 ];
 

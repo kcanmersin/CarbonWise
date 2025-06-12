@@ -28,29 +28,30 @@ const PaperPage = () => {
   
   // Sidebar menu items
   const menuItems = [
-    { key: "dashboard", name: "Dashboard" },
-    {
-      key: "resource-monitoring",
-      name: "Resource Monitoring",
-      subItems: [
-        { key: "electricity", name: "Electricity" },
-        { key: "water", name: "Water" },
-        { key: "paper", name: "Paper" },
-        { key: "naturalGas", name: "Natural Gas" }
-      ]
-    },
-    {
-      key: "carbon-footprint",
-      name: "Carbon Footprint",
-      subItems: [
-        { key: "test", name: "Test" },
-        { key: "calculations", name: "Calculations" }
-      ]
-    },
-    { key: "predictions", name: "Predictions" },
-    { key: "adminTools", name: "Admin Tools" },
-    { key: "reports", name: "Reports" }
-  ];
+  { key: "dashboard", name: "Dashboard" },
+  {
+    key: "resource-monitoring",
+    name: "Resource Monitoring",
+    subItems: [
+      { key: "electricity", name: "Electricity" },
+      { key: "water", name: "Water" },
+      { key: "paper", name: "Paper" },
+      { key: "naturalGas", name: "Natural Gas" }
+    ]
+  },
+  {
+    key: "carbon-footprint",
+    name: "Carbon Footprint",
+    subItems: [
+      { key: "test", name: "Test" },
+      { key: "calculations", name: "Calculations" }
+    ]
+  },
+  { key: "predictions", name: "Predictions" },
+  { key: "userManagement", name: "User Management" }, // 👈 NEW ITEM
+  { key: "adminTools", name: "Admin Tools" },         // 👈 KEPT ORIGINAL
+  { key: "reports", name: "Reports" }
+];
 
   // Fetch buildings on component mount
   useEffect(() => {
