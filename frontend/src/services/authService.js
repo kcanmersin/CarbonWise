@@ -1,6 +1,31 @@
 const API_URL = "http://localhost:5067/api/Auth";
 const OAUTH_URL = "http://localhost:5067/api/OAuth";
 
+// Token management functions
+export const saveAuthToken = (tokenData) => {
+  try {
+    // The 'token' field from your response IS the access token (JWT)
+    if (tokenData.token) {
+      localStorage.setItem('access_token', tokenData.token);
+      console.log('JWT access token saved to localStorage');
+    }
+    return true;
+  } catch (error) {
+    console.error('Error saving auth token:', error);
+    return false;
+  }
+};
+
+export const getAuthToken = () => {
+  return localStorage.getItem('access_token');
+};
+
+export const clearAuthData = () => {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('user_data'); // If you store user data separately
+  console.log('All auth data cleared from storage');
+};
+
 // Traditional login
 export const loginUser = async ({ username, password }) => {
   const response = await fetch(`${API_URL}/login`, {
@@ -14,7 +39,12 @@ export const loginUser = async ({ username, password }) => {
     throw new Error(err.error || "Login failed");
   }
 
-  return await response.json();
+  const result = await response.json();
+  
+  // Save token data after successful login
+  saveAuthToken(result);
+  
+  return result;
 };
 
 // OAuth Functions - Simplified for backend-managed PKCE
@@ -113,6 +143,9 @@ export const handleOAuthCallback = async (code, state) => {
       throw new Error("Invalid response format from OAuth callback");
     }
     
+    // Save token data after successful OAuth callback
+    saveAuthToken(result);
+    
     // Log what we're returning to help debug
     console.log("Returning user data:", {
       hasUser: !!result.user,
@@ -192,6 +225,9 @@ export const handleOAuthCallbackPost = async (code, state) => {
       throw new Error("Invalid response format from OAuth callback");
     }
     
+    // Save token data after successful OAuth callback
+    saveAuthToken(result);
+    
     // Log what we're returning to help debug
     console.log("Returning user data:", {
       hasUser: !!result.user,
@@ -223,28 +259,6 @@ export const redirectToOAuthLogin = async () => {
   }
 };
 
-// Alternative OAuth login method that constructs URL manually if needed
-export const getOAuthLoginUrlAlternative = () => {
-  // If your backend doesn't provide the full URL, you can construct it manually
-  // This would be based on your OAuth provider's configuration
-  const baseUrl = "https://oauth.gtu.edu.tr/authorize"; // Replace with actual GTU OAuth URL
-  const clientId = "your-client-id"; // This should come from your backend config
-  const redirectUri = encodeURIComponent(window.location.origin + window.location.pathname);
-  const scope = encodeURIComponent("openid profile email");
-  const responseType = "code";
-  const state = generateRandomState();
-  
-  // Store state in sessionStorage for validation (if needed)
-  sessionStorage.setItem('oauth_state', state);
-  
-  return `${baseUrl}?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=${responseType}&state=${state}`;
-};
-
-// Generate random state for OAuth security
-const generateRandomState = () => {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-};
-
 // Register function (if needed)
 export const registerUser = async ({ username, email, password }) => {
   const response = await fetch(`${API_URL}/register`, {
@@ -258,54 +272,21 @@ export const registerUser = async ({ username, email, password }) => {
     throw new Error(err.error || "Registration failed");
   }
 
-  return await response.json();
-};
-
-// Auth status check function
-export const checkAuthStatus = async () => {
-  try {
-    const response = await fetch(`${API_URL}/status`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include", // Include cookies for session-based auth
-    });
-
-    if (!response.ok) {
-      return { isAuthenticated: false };
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error checking auth status:", error);
-    return { isAuthenticated: false };
-  }
+  const result = await response.json();
+  
+  // Save token data after successful registration
+  saveAuthToken(result);
+  
+  return result;
 };
 
 // Logout function
 export const logoutUser = async () => {
-  try {
-    const response = await fetch(`${API_URL}/logout`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include", // Include cookies for session-based auth
-    });
-
-    if (!response.ok) {
-      console.warn("Logout request failed, but continuing with client-side cleanup");
-    }
-
-    // Clear any local session data
-    sessionStorage.removeItem('oauth_state');
-    
-    console.log("User logged out successfully");
-    return true;
-  } catch (error) {
-    console.error("Error during logout:", error);
-    // Still clear local data even if server request fails
-    sessionStorage.removeItem('oauth_state');
-    return false;
-  }
+  // Clear local storage and session data
+  clearAuthData();
+  console.log('User logged out and auth data cleared');
+  // Optionally, redirect to a logout confirmation page or home page
+  window.location.href = '/'; // Redirect to home page after logout
 };
 
 // Utility function to parse URL parameters
