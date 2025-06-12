@@ -41,13 +41,49 @@ using CarbonWise.BuildingBlocks.Infrastructure.AirQuality;
 
 using CarbonWise.BuildingBlocks.Application.Services.AI;
 using CarbonWise.API.Services;
+using CarbonWise.BuildingBlocks.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 builder.Services.AddControllers();
 
+builder.Services.AddMemoryCache(); 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options => options.ConfigureSwaggerOptions());
+
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.ConfigureSwaggerOptions();
+
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token.",
+        Name = "Authorization",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT"
+    });
+
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement()
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "oauth2",
+                Name = "Bearer",
+                In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+            },
+            new List<string>()
+        }
+    });
+});
 
 // Add database context
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -98,8 +134,8 @@ builder.Services.AddScoped<IPaperRepository, PaperRepository>();
 builder.Services.AddScoped<IWaterRepository, WaterRepository>();
 builder.Services.AddScoped<IAIService, AIService>();
 builder.Services.AddScoped<IOAuthService, OAuthService>();
-
-// Register Carbon Footprint Test repositories
+builder.Services.AddScoped<IUserManagementService, UserManagementService>();
+builder.Services.AddScoped<IOAuthService, OAuthService>();
 builder.Services.AddScoped<ICarbonFootprintTestRepository, CarbonFootprintTestRepository>();
 builder.Services.AddScoped<ITestQuestionRepository, TestQuestionRepository>();
 
