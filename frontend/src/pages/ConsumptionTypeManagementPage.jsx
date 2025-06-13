@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef  } from "react";
+import * as XLSX from "xlsx";
 import Sidebar from "../components/Sidebar";
 import { getBuildings } from "../services/buildingService";
+import { trainModel } from "../services/aiService";
 
 // Import the specific services with their correct function names
 import { 
@@ -39,6 +41,9 @@ import {
   watersMultipleUpload
 } from "../services/waterService";
 
+const MODEL_TYPES = ['rf', 'xgb', 'gb'];
+const ENSEMBLE_TYPES = ['rf_gb_xgb'];
+
 export default function ConsumptionTypesManagement() {
   const [consumptionRecords, setConsumptionRecords] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,9 +69,6 @@ export default function ConsumptionTypesManagement() {
     
     // Paper specific fields
     usage: 0,
-    
-    // Water specific fields
-    // initialMeterValue and finalMeterValue are already included above
   };
   
   const [formData, setFormData] = useState(initialFormData);
@@ -95,10 +97,20 @@ export default function ConsumptionTypesManagement() {
     ]
   },
   { key: "predictions", name: "Predictions" },
-  { key: "userManagement", name: "User Management" }, // 👈 NEW ITEM
-  { key: "adminTools", name: "Admin Tools" },         // 👈 KEPT ORIGINAL
+  { key: "userManagement", name: "User Management" },
+  { key: "adminTools", name: "Admin Tools" },
   { key: "reports", name: "Reports" }
 ];
+
+  const getResourceTypeForAPI = (selectedType) => {
+    const mapping = {
+      "Electric": "electricity",
+      "NaturalGas": "naturalgas",
+      "Water": "water",
+      "Paper": "paper"
+    };
+    return mapping[selectedType];
+  }
 
   // Updated consumption types - ALL now require buildings
   const consumptionTypes = [
@@ -232,6 +244,19 @@ export default function ConsumptionTypesManagement() {
         setFormData(prev => ({
           ...prev,
           kwhValue
+        }));
+      }
+    }
+  }, [formData.initialMeterValue, formData.finalMeterValue, selectedType]);
+
+  // Calculate derived values for natural gas
+  useEffect(() => {
+    if (selectedType === "NaturalGas") {
+      const sM3Value = formData.finalMeterValue - formData.initialMeterValue;
+      if (sM3Value >= 0) {
+        setFormData(prev => ({
+          ...prev,
+          sM3Value
         }));
       }
     }
@@ -398,7 +423,6 @@ export default function ConsumptionTypesManagement() {
     
     try {
       const recordData = prepareRecordData();
-
       if (editingRecord) {
         // Update existing record
         switch (selectedType) {
@@ -440,6 +464,15 @@ export default function ConsumptionTypesManagement() {
       // Reset form and refresh data
       resetForm();
       fetchConsumptionData();
+
+      try {
+        const resourceType = getResourceTypeForAPI(selectedType);
+        console.log(`Saving ${resourceType}`);
+        await trainModel(resourceType, recordData.buildingId, MODEL_TYPES, ENSEMBLE_TYPES);
+        console.log(`Model trained for ${resourceType}`);
+      } catch (error) {
+        console.error(`Error training model for ${selectedType}:`, error);
+      }
     } catch (err) {
       setError(editingRecord 
         ? `Failed to update ${selectedType} record. Please try again.` 
@@ -499,43 +532,91 @@ export default function ConsumptionTypesManagement() {
       setError(err.message);
     }
   };
-  
-  // Upload handler for current consumption type
-  const handleUploadExcel = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
 
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      switch (selectedType) {
-        case "Electric":
-          await electricityMultipleUpload(file);
-          break;
-        case "NaturalGas":
-          await naturalGasMultipleUpload(file);
-          break;
-        case "Water":
-          await watersMultipleUpload(file);
-          break;
-        case "Paper":
-          await papersMultipleUpload(file);
-          break;
-        default:
-          throw new Error(`Unknown consumption type: ${selectedType}`);
+  const normalize = (str) =>
+    str
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove accents/diacritics
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const findBuildingIdBySheetName = (sheetName, buildings) => {
+      const normalizedSheetName = normalize(sheetName);
+
+      const matched = buildings.find(
+        (b) => normalize(b.name) === normalizedSheetName
+      );
+
+      return matched?.id || null;
+    };
+
+    const handleUploadExcel = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const buildings = await getBuildings();
+
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data, { type: "array" });
+
+        // print the sheet names for debugging
+        console.log("Sheet Names:", workbook.SheetNames);
+
+        for (const sheetName of workbook.SheetNames) {
+          const worksheet = workbook.Sheets[sheetName];
+
+          const buildingId = findBuildingIdBySheetName(sheetName, buildings);
+
+          console.log(`Processing sheet: ${sheetName}, Building ID: ${buildingId}`);
+
+          if (!buildingId) {
+            console.warn(`No building matched for sheet "${sheetName}"`);
+            continue;
+          }
+
+          // Upload based on selectedType
+          switch (selectedType) {
+            case "Electric":
+              await electricityMultipleUpload(file);
+              break;
+            case "NaturalGas":
+              await naturalGasMultipleUpload(file);
+              break;
+            case "Water":
+              await watersMultipleUpload(file);
+              break;
+            case "Paper":
+              await papersMultipleUpload(file);
+              break;
+            default:
+              throw new Error(`Unknown consumption type: ${selectedType}`);
+          }
+
+          // Train
+          try {
+            const resourceType = getResourceTypeForAPI(selectedType);
+            await trainModel(resourceType, buildingId, MODEL_TYPES, ENSEMBLE_TYPES);
+            console.log(`Trained model for ${sheetName} (${buildingId})`);
+          } catch (trainErr) {
+            console.error(`Training failed for ${sheetName}:`, trainErr);
+          }
+        }
+
+        fetchConsumptionData();
+        alert(`All sheets uploaded`);
+      } catch (err) {
+        setError(err.message);
+        console.error("Upload error:", err);
+      } finally {
+        setIsLoading(false);
+        e.target.value = "";
       }
-      
-      // Refresh data after successful upload
-      fetchConsumptionData();
-      alert(`Successfully uploaded multiple ${selectedType} records!`);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
-      e.target.value = ''; // Reset file input
-    }
-  };
+    };
 
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
@@ -842,15 +923,18 @@ export default function ConsumptionTypesManagement() {
                     value={formData.sM3Value}
                     onChange={handleInputChange}
                     required
+                    readOnly={true}
                     min="0"
                     style={{
                       width: "100%",
                       padding: "0.75rem",
                       borderRadius: "4px",
                       border: "1px solid #ddd",
-                      boxSizing: "border-box"
+                      boxSizing: "border-box",
+                      backgroundColor: "#f5f5f5"
                     }}
                   />
+                  <small style={{ color: "#7f8c8d" }}>Calculated from meter values</small>
                 </div>
               )}
 

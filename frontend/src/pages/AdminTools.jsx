@@ -27,8 +27,8 @@ export default function AdminTools() {
     ]
   },
   { key: "predictions", name: "Predictions" },
-  { key: "userManagement", name: "User Management" }, // 👈 NEW ITEM
-  { key: "adminTools", name: "Admin Tools" },         // 👈 KEPT ORIGINAL
+  { key: "userManagement", name: "User Management" },
+  { key: "adminTools", name: "Admin Tools" },
   { key: "reports", name: "Reports" }
 ];
 

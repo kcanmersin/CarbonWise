@@ -15,6 +15,7 @@ import BuildingsManagement from "./pages/BuildingManagementPage";
 import ConsumptionTypesManagement from "./pages/ConsumptionTypeManagementPage";
 import SchoolInfoPage from "./pages/SchoolInfoManagementPage";
 import UserManagementPage from "./pages/UserManagementPage";
+import PredictionsPage from "./pages/PredictionsPage";
 import ProtectedRoute from "./components/ProtectedRoute"; // Import the new ProtectedRoute
 import { getCurrentUserInfo } from "./services/userService"; // Import to check token validity
 import { getAuthToken, clearAuthData } from "./services/authService"; // Import auth utilities
@@ -234,8 +235,7 @@ function App() {
           <Route path="/predictions" element={
             <AuthCheck>
               <ProtectedRoute allowedRoles={["User", "Admin", "SuperUser"]}>
-                {/* You'll need to create this component */}
-                <div>Predictions Page (Admin/SuperUser only)</div>
+                <PredictionsPage user={user} onLogout={handleLogout} />
               </ProtectedRoute>
             </AuthCheck>
           } />
