@@ -6,7 +6,7 @@ export const getBuildings = async () => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`
       }
     });
 
@@ -28,7 +28,7 @@ export const getBuildingById = async (id) => {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`
       }
     });
 
@@ -50,7 +50,7 @@ export const createBuilding = async (buildingData) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`
       },
       body: JSON.stringify(buildingData)
     });
@@ -73,7 +73,7 @@ export const updateBuilding = async (id, buildingData) => {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`
       },
       body: JSON.stringify(buildingData)
     });
@@ -96,7 +96,7 @@ export const deleteBuilding = async (id) => {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`
       }
     });
 

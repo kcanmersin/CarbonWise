@@ -246,7 +246,7 @@ export const papersdownloadSampleExcel = async () => {
     const response = await fetch(`${API_URL}/Papers/downloadSampleExcel`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`, // if using authentication
+        'Authorization': `Bearer ${localStorage.getItem('access_token')}`, // if using authentication
       },
     });
     
@@ -275,7 +275,7 @@ export const papersMultipleUpload = async (file) => {
     const response = await fetch(`${API_URL}/Papers/multiple`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${localStorage.getItem("token")}`
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`
       },
       body: formData
     });
