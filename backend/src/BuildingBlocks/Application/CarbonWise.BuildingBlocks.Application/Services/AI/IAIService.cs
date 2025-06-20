@@ -15,8 +15,8 @@ namespace CarbonWise.BuildingBlocks.Application.Services.AI
     }
     public class AITrainRequest
     {
-        public string ResourceType { get; set; } // electricity, water, naturalgas, paper
-        public string BuildingId { get; set; } // "0" for all buildings or UUID
+        public string ResourceType { get; set; }
+        public string BuildingId { get; set; }
         public List<string> ModelTypes { get; set; } = new List<string> { "rf", "xgb", "gb" };
         public List<string> EnsembleTypes { get; set; } = new List<string> { "rf_gb", "rf_xgb", "gb_xgb", "rf_gb_xgb" };
     }

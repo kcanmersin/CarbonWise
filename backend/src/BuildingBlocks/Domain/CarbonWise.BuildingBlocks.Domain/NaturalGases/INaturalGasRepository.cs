@@ -14,5 +14,6 @@ namespace CarbonWise.BuildingBlocks.Domain.NaturalGases
         Task DeleteAsync(NaturalGasId id);
         Task<List<NaturalGasMonthlyTotalDto>> GetMonthlyTotalsAsync(DateTime? startDate = null, DateTime? endDate = null);
         Task<List<NaturalGasMonthlyAggregateDto>> GetMonthlyAggregateAsync(DateTime? startDate = null, DateTime? endDate = null);
+        Task<bool> ExistsForMonthAsync(BuildingId buildingId, int year, int month);
     }
 }

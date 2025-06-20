@@ -1,6 +1,4 @@
-﻿// backend/src/API/CarbonWise.API/Controller/AuthController.cs
-// Mevcut AuthController'ınızı bu kodla değiştirin
-
+﻿
 using System.Threading.Tasks;
 using CarbonWise.API.Services;
 using CarbonWise.BuildingBlocks.Application.Users;
@@ -62,7 +60,6 @@ namespace CarbonWise.API.Controllers
             return Ok(result);
         }
 
-        // OAuth Endpoints
         [HttpGet("oauth/login-url")]
         [AllowAnonymous]
         public IActionResult GetOAuthLoginUrl()
@@ -94,7 +91,6 @@ namespace CarbonWise.API.Controllers
                 return StatusCode(result.StatusCode, new { error = result.ErrorMessage });
             }
 
-            // Başarılı authentication sonucu döndür
             var userDto = new UserDto
             {
                 Id = result.User.Id.Value,
@@ -116,7 +112,6 @@ namespace CarbonWise.API.Controllers
         }
     }
 
-    // Request Models
     public class OAuthCallbackRequest
     {
         public string Code { get; set; } = string.Empty;

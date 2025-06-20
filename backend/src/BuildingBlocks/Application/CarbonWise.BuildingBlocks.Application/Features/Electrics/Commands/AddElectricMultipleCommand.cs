@@ -62,7 +62,6 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Electrics.Commands.AddE
                     if (string.IsNullOrEmpty(sheetName))
                         continue;
 
-                    // Binayı bul
                     var building = await _buildingRepository.GetByNameAsync(sheetName);
                     if (building == null)
                     {
@@ -80,14 +79,12 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Electrics.Commands.AddE
                     foreach (OpenXmlRow row in sheetData.Elements<OpenXmlRow>())
                     {
                         rowIndex++;
-                        // Skip header row
                         if (rowIndex == 1) continue;
 
                         try
                         {
                             var cells = row.Elements<OpenXmlCell>().ToList();
 
-                            // Boş satırları atla
                             if (cells.Count < 4)
                             {
                                 bool isEmpty = true;
@@ -113,7 +110,6 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Electrics.Commands.AddE
                             var finalValue = GetCellValue(document, cells[2]);
                             var kwhValue = GetCellValue(document, cells[3]);
 
-                            // Tüm değerler boşsa bu satırı atla
                             if (string.IsNullOrWhiteSpace(dateValue) &&
                                 string.IsNullOrWhiteSpace(initialValue) &&
                                 string.IsNullOrWhiteSpace(finalValue) &&
@@ -131,8 +127,17 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Electrics.Commands.AddE
                                 continue;
                             }
 
+                            var date = ParseDate(dateValue);
+                            
+                            var existsForMonth = await _electricRepository.ExistsForMonthAsync(building.Id, date.Year, date.Month);
+                            if (existsForMonth)
+                            {
+                                response.Errors.Add($"Sheet '{sheetName}', Row {rowIndex}: Bu bina için {date:yyyy/MM} tarihinde elektrik verisi zaten mevcut. Aynı ay için birden fazla veri girilemez.");
+                                continue;
+                            }
+
                             var electric = Electric.Create(
-                                ParseDate(dateValue),
+                                date,
                                 decimal.Parse(initialValue),
                                 decimal.Parse(finalValue),
                                 decimal.Parse(kwhValue),
@@ -183,7 +188,6 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Electrics.Commands.AddE
 
         private DateTime ParseDate(string dateValue)
         {
-            // Excel'deki tarih formatını kontrol et
             if (double.TryParse(dateValue, out double doubleValue))
             {
                 try
@@ -193,7 +197,6 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Electrics.Commands.AddE
                 catch { }
             }
 
-            // Çeşitli tarih formatlarını dene
             string[] formats = {
                 "MM/dd/yyyy",
                 "M/d/yyyy",

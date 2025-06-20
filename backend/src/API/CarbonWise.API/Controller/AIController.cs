@@ -16,9 +16,6 @@ namespace CarbonWise.API.Controller
         _aiService = aiService;
     }
 
-    /// <summary>
-    /// Train AI models for energy consumption prediction
-    /// </summary>
     [HttpPost("train")]
     public async Task<IActionResult> TrainModel([FromBody] TrainModelRequest request)
     {
@@ -52,9 +49,6 @@ namespace CarbonWise.API.Controller
         }
     }
 
-    /// <summary>
-    /// Predict future energy consumption using trained models
-    /// </summary>
     [HttpPost("predict")]
     public async Task<IActionResult> Predict([FromBody] PredictRequest request)
     {
@@ -88,9 +82,6 @@ namespace CarbonWise.API.Controller
         }
     }
 
-    /// <summary>
-    /// Get all trained models
-    /// </summary>
     [HttpGet("models")]
     public async Task<IActionResult> GetModels()
     {
@@ -105,9 +96,6 @@ namespace CarbonWise.API.Controller
         }
     }
 
-    /// <summary>
-    /// Check AI service health status
-    /// </summary>
     [HttpGet("health")]
     public async Task<IActionResult> GetHealth()
     {
@@ -131,7 +119,6 @@ namespace CarbonWise.API.Controller
     }
 }
 
-// Request DTOs
 public class TrainModelRequest
 {
     [Required]
