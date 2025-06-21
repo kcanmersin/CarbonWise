@@ -6,7 +6,7 @@ import {
   Tooltip, Legend, ResponsiveContainer, AreaChart, Area,
   BarChart, Bar, PieChart, Pie, Cell
 } from 'recharts';
-import { getMonthlyAirQuality } from "../services/dashboardService";
+import { getCityAirQuality, getMonthlyAirQuality } from "../services/dashboardService";
 import { getStats } from "../services/carbonFootprintTestService";
 
 export default function Dashboard({ user, onLogout }) {
@@ -16,6 +16,10 @@ export default function Dashboard({ user, onLogout }) {
   const [monthlyData, setMonthlyData] = useState([]);
   const [isLoadingMonthly, setIsLoadingMonthly] = useState(false);
   const [monthlyError, setMonthlyError] = useState(null);
+
+  const [currentAirQuality, setCurrentAirQuality] = useState(null);
+  const [isLoadingCurrent, setIsLoadingCurrent] = useState(false);
+  const [currentError, setCurrentError] = useState(null);
   
   // New states for sustainability stats
   const [stats, setStats] = useState(null);
@@ -30,6 +34,29 @@ export default function Dashboard({ user, onLogout }) {
     if (aqi <= 200) return { bg: "#fe6a69", text: "#a11c1c", level: "Unhealthy" };
     if (aqi <= 300) return { bg: "#a97abc", text: "#4f266e", level: "Very Unhealthy" };
     return { bg: "#a87383", text: "#591035", level: "Hazardous" };
+  };
+
+  const getIcon = (type) => {
+    switch (type) {
+      case "pm10":
+        return "💨";
+      case "pm25":
+        return "🌫️";
+      case "no2":
+        return "🏭";
+      case "so2":
+        return "🧪";
+      case "co":
+        return "🚗";
+      case "t":
+        return "🌡️";
+      case "h":
+        return "💧";
+      case "w":
+        return "💨";
+      default:
+        return "ℹ️";
+    }
   };
 
   // Fetch sustainability stats
@@ -92,12 +119,189 @@ export default function Dashboard({ user, onLogout }) {
     fetchMonthlyAirQuality();
   }, [city]);
 
+  // Fetch current air quality data
+  useEffect(() => {
+    const fetchCurrentAirQuality = async () => {
+      setIsLoadingCurrent(true);
+      setCurrentError(null);
+      try {
+        const data = await getCityAirQuality(city);
+        console.log("Current air quality data:", data);
+        setCurrentAirQuality(data.data || data);
+      } catch (error) {
+        console.error("Error fetching current air quality data:", error);
+        setCurrentError("Failed to load current air quality data. Please try again.");
+      } finally {
+        setIsLoadingCurrent(false);
+      }
+    };
+
+    fetchCurrentAirQuality();
+  }, [city]);
+
   // Handle city search
   const handleCitySearch = (e) => {
     e.preventDefault();
     if (cityInput.trim()) {
       setCity(cityInput.trim());
     }
+  };
+
+  const renderAirQualityCard = (data, title) => {
+    if (!data) return null;
+    
+    const aqiInfo = getAqiColor(data.aqi || 0);
+    
+    return (
+      <div style={{ 
+        marginTop: "2rem", 
+        borderRadius: "12px", 
+        overflow: "hidden",
+        boxShadow: "0 10px 20px rgba(0,0,0,0.1)"
+      }}>
+        {/* Header */}
+        <div style={{ 
+          backgroundColor: "#2c3e50", 
+          padding: "1rem 1.5rem",
+          color: "white",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
+        }}>
+          <h2 style={{ margin: "0", fontSize: "1.3rem" }}>{title}</h2>
+          <span style={{ fontSize: "0.9rem", opacity: "0.8" }}>
+            Last updated: {new Date().toLocaleTimeString()}
+          </span>
+        </div>
+        
+        {/* AQI Score Section */}
+        <div style={{ 
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "1.5rem",
+          backgroundColor: aqiInfo.bg,
+          color: aqiInfo.text
+        }}>
+          <div style={{ fontSize: "3rem", fontWeight: "bold" }}>{data.aqi || 'N/A'}</div>
+          <div style={{ fontSize: "1.2rem", fontWeight: "600" }}>
+            Air Quality: {aqiInfo.level}
+          </div>
+          <div style={{ marginTop: "0.5rem", fontSize: "0.9rem" }}>
+            Dominant Pollutant: {(data.dominentpol || data.dominentPollutant || 'N/A').toUpperCase()}
+          </div>
+        </div>
+        
+        {/* Pollutants Grid */}
+        <div style={{ 
+          display: "grid", 
+          gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+          gap: "1rem",
+          padding: "1.5rem",
+          backgroundColor: "#f8f9fa"
+        }}>
+          {data.iaqi ? (
+            // Handle old API format with iaqi
+            Object.entries(data.iaqi).map(([key, value]) => (
+              <div key={key} style={{ 
+                backgroundColor: "white",
+                padding: "1rem",
+                borderRadius: "8px",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center"
+              }}>
+                <div style={{ fontSize: "1.8rem", marginBottom: "0.5rem" }}>
+                  {getIcon(key)}
+                </div>
+                <div style={{ 
+                  textTransform: "uppercase", 
+                  fontWeight: "bold",
+                  fontSize: "0.8rem",
+                  color: "#7f8c8d"
+                }}>
+                  {key === "pm25" ? "PM2.5" : key === "t" ? "TEMP" : key === "h" ? "HUMIDITY" : key.toUpperCase()}
+                </div>
+                <div style={{ 
+                  fontWeight: "bold", 
+                  fontSize: "1.2rem",
+                  marginTop: "0.3rem"
+                }}>
+                  {value.v} 
+                  <span style={{ fontSize: "0.7rem", marginLeft: "2px" }}>
+                    {key === "t" ? "°C" : key === "h" ? "%" : "µg/m³"}
+                  </span>
+                </div>
+              </div>
+            ))
+          ) : (
+            // Handle new API format with direct properties
+            <>
+              {(data.pM25 || data.pm25) && (
+                <div style={{ backgroundColor: "white", padding: "1rem", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{ fontSize: "1.8rem", marginBottom: "0.5rem" }}>🌫️</div>
+                  <div style={{ textTransform: "uppercase", fontWeight: "bold", fontSize: "0.8rem", color: "#7f8c8d" }}>PM2.5</div>
+                  <div style={{ fontWeight: "bold", fontSize: "1.2rem", marginTop: "0.3rem" }}>{data.pM25 || data.pm25} <span style={{ fontSize: "0.7rem", marginLeft: "2px" }}>µg/m³</span></div>
+                </div>
+              )}
+              {(data.pM10 || data.pm10) && (
+                <div style={{ backgroundColor: "white", padding: "1rem", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{ fontSize: "1.8rem", marginBottom: "0.5rem" }}>💨</div>
+                  <div style={{ textTransform: "uppercase", fontWeight: "bold", fontSize: "0.8rem", color: "#7f8c8d" }}>PM10</div>
+                  <div style={{ fontWeight: "bold", fontSize: "1.2rem", marginTop: "0.3rem" }}>{data.pM10 || data.pm10} <span style={{ fontSize: "0.7rem", marginLeft: "2px" }}>µg/m³</span></div>
+                </div>
+              )}
+              {(data.nO2 || data.no2) && (
+                <div style={{ backgroundColor: "white", padding: "1rem", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{ fontSize: "1.8rem", marginBottom: "0.5rem" }}>🏭</div>
+                  <div style={{ textTransform: "uppercase", fontWeight: "bold", fontSize: "0.8rem", color: "#7f8c8d" }}>NO2</div>
+                  <div style={{ fontWeight: "bold", fontSize: "1.2rem", marginTop: "0.3rem" }}>{data.nO2 || data.no2} <span style={{ fontSize: "0.7rem", marginLeft: "2px" }}>µg/m³</span></div>
+                </div>
+              )}
+              {data.temperature && (
+                <div style={{ backgroundColor: "white", padding: "1rem", borderRadius: "8px", boxShadow: "0 2px 4px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{ fontSize: "1.8rem", marginBottom: "0.5rem" }}>🌡️</div>
+                  <div style={{ textTransform: "uppercase", fontWeight: "bold", fontSize: "0.8rem", color: "#7f8c8d" }}>TEMP</div>
+                  <div style={{ fontWeight: "bold", fontSize: "1.2rem", marginTop: "0.3rem" }}>{data.temperature} <span style={{ fontSize: "0.7rem", marginLeft: "2px" }}>°C</span></div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        
+        {/* Footer with more details */}
+        {data.city?.url && (
+          <div style={{ 
+            padding: "1rem 1.5rem",
+            backgroundColor: "#ecf0f1",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            borderTop: "1px solid #ddd"
+          }}>
+            <div>
+              <strong>Location:</strong> {data.city.name}
+            </div>
+            <a 
+              href={data.city.url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{
+                backgroundColor: "#3498db",
+                color: "white",
+                padding: "0.5rem 1rem",
+                borderRadius: "4px",
+                textDecoration: "none",
+                fontWeight: "500"
+              }}
+            >
+              View Details
+            </a>
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Menu items
@@ -969,6 +1173,45 @@ export default function Dashboard({ user, onLogout }) {
             </div>
           )}
         </div>
+        {/* Daily Air Quality Card */}
+        {isLoadingCurrent && (
+          <div style={{ 
+            textAlign: "center", 
+            padding: "3rem",
+            backgroundColor: "white",
+            borderRadius: "12px",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
+            marginTop: "2rem"
+          }}>
+            <div style={{
+              display: "inline-block",
+              width: "50px",
+              height: "50px",
+              border: "5px solid #f3f3f3",
+              borderTop: "5px solid #3498db",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite"
+            }}></div>
+            <p style={{ marginTop: "1rem", fontSize: "1.1rem", color: "#7f8c8d" }}>Loading current air quality...</p>
+          </div>
+        )}
+
+        {currentError && (
+          <div style={{
+            backgroundColor: "#fff5f5",
+            border: "1px solid #feb2b2",
+            color: "#c53030",
+            padding: "2rem",
+            borderRadius: "12px",
+            textAlign: "center",
+            marginTop: "2rem"
+          }}>
+            <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>⚠️</div>
+            <strong>Error:</strong> {currentError}
+          </div>
+        )}
+
+        {currentAirQuality && renderAirQualityCard(currentAirQuality, `Current Air Quality in ${currentAirQuality?.city?.name || city}`)}
       </div>
     </div>
   );
