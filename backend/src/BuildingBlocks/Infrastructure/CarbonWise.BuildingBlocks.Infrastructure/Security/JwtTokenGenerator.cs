@@ -87,11 +87,11 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Security
             }
             catch (SecurityTokenException)
             {
-                return null; // Token geçersiz
+                return null;
             }
             catch (Exception)
             {
-                return null; // Genel hata
+                return null;
             }
         }
 

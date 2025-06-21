@@ -30,7 +30,6 @@ namespace CarbonWise.API.Controllers
             using var memoryStream = new MemoryStream();
             using (var document = SpreadsheetDocument.Create(memoryStream, SpreadsheetDocumentType.Workbook))
             {
-                // Workbook oluştur
                 var workbookPart = document.AddWorkbookPart();
                 workbookPart.Workbook = new Workbook();
 
@@ -65,10 +64,8 @@ namespace CarbonWise.API.Controllers
             };
             sheets.Append(sheet);
 
-            // Veri ekle
             var sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
 
-            // Header satırı
             var headerRow = new Row() { RowIndex = 1 };
             headerRow.Append(
                 CreateCell("Date", OpenXmlCellValues.String, 1),
@@ -78,7 +75,6 @@ namespace CarbonWise.API.Controllers
             );
             sheetData.Append(headerRow);
 
-            // Örnek veri satırları
             var row2 = new Row() { RowIndex = 2 };
             row2.Append(
                 CreateCell("01/01/2025", OpenXmlCellValues.String, 1),

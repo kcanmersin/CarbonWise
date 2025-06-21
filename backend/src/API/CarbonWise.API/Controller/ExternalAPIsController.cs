@@ -55,7 +55,6 @@ namespace CarbonWise.API.Controller
             return Ok(result);
         }
 
-        // Database'den hava kalitesi verilerini getiren endpoint'ler
         [HttpGet("airquality/database/city/{cityName}")]
         public async Task<IActionResult> GetStoredAirQualityByCity(string cityName)
         {

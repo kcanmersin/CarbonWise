@@ -167,5 +167,13 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Electrics
                 .ThenBy(x => x.BuildingName == "Total" ? 1 : 0)
                 .ToList();
         }
+
+        public async Task<bool> ExistsForMonthAsync(BuildingId buildingId, int year, int month)
+        {
+            return await _dbContext.Electrics
+                .AnyAsync(e => e.BuildingId == buildingId && 
+                              e.Date.Year == year && 
+                              e.Date.Month == month);
+        }
     }
 }

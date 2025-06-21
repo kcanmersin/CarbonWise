@@ -18,5 +18,6 @@ namespace CarbonWise.BuildingBlocks.Domain.Papers
         Task DeleteAsync(PaperId id);
         Task<List<PaperMonthlyTotalDto>> GetMonthlyTotalsAsync(DateTime? startDate = null, DateTime? endDate = null);
         Task<List<PaperMonthlyAggregateDto>> GetMonthlyAggregateAsync(DateTime? startDate = null, DateTime? endDate = null);
+        Task<bool> ExistsForMonthAsync(BuildingId buildingId, int year, int month);
     }
 }

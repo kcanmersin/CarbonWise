@@ -85,7 +85,6 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// Add database context
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -93,7 +92,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     )
 );
 builder.Services.AddMemoryCache();
-// Configure JWT authentication
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.AddAuthentication(options =>
 {
@@ -115,10 +113,8 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Add MemoryCache for OAuth state management
 builder.Services.AddMemoryCache();
 
-// Register repositories
 builder.Services.AddScoped<IAirQualityRepository, AirQualityRepository>();
 builder.Services.AddScoped<IAirQualityBackgroundService, AirQualityBackgroundService>();
 builder.Services.AddScoped<AirQualityJob>();
@@ -139,14 +135,11 @@ builder.Services.AddScoped<IOAuthService, OAuthService>();
 builder.Services.AddScoped<ICarbonFootprintTestRepository, CarbonFootprintTestRepository>();
 builder.Services.AddScoped<ITestQuestionRepository, TestQuestionRepository>();
 
-// Register services
 builder.Services.AddScoped<ICarbonFootprintService, CarbonFootprintService>();
 builder.Services.AddScoped<ICarbonFootprintTestService, CarbonFootprintTestService>();
 
-// Register OAuth service - ADD THIS LINE
 builder.Services.AddScoped<IOAuthService, OAuthService>();
 
-// Register handlers
 builder.Services.AddScoped<RegisterUserCommandHandler>();
 builder.Services.AddScoped<LoginCommandHandler>();
 builder.Services.AddScoped<GetUserQueryHandler>();
@@ -172,7 +165,6 @@ builder.Services.AddMediatR(cfg => {
     cfg.RegisterServicesFromAssembly(typeof(CarbonWise.BuildingBlocks.Application.Features.Buildings.BuildingDto).Assembly);
 });
 
-// Add HttpContextAccessor
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddCors(options =>
@@ -193,7 +185,6 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.Migrate();
 }
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
