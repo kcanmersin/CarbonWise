@@ -40,6 +40,13 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Waters.Commands.CreateW
                 throw new ApplicationException("Building not found");
             }
 
+            var buildingId = new BuildingId(request.BuildingId);
+            var existsForMonth = await _waterRepository.ExistsForMonthAsync(buildingId, request.Date.Year, request.Date.Month);
+            if (existsForMonth)
+            {
+                throw new ApplicationException($"Bu bina için {request.Date:yyyy/MM} tarihinde su verisi zaten mevcut. Aynı ay için birden fazla veri girilemez.");
+            }
+
             var water = Water.Create(
                 request.Date,
                 request.InitialMeterValue,

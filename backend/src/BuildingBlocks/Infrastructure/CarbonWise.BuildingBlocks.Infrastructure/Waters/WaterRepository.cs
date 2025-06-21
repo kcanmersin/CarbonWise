@@ -161,5 +161,13 @@ namespace CarbonWise.BuildingBlocks.Infrastructure.Waters
 
             return monthlyData.OrderBy(x => x.YearMonth).ThenBy(x => x.BuildingName == "Total" ? 1 : 0).ToList();
         }
+
+        public async Task<bool> ExistsForMonthAsync(BuildingId buildingId, int year, int month)
+        {
+            return await _dbContext.Waters
+                .AnyAsync(w => w.BuildingId == buildingId && 
+                              w.Date.Year == year && 
+                              w.Date.Month == month);
+        }
     }
 }

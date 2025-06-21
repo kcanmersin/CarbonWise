@@ -62,7 +62,6 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Papers.Commands.AddPape
                     if (string.IsNullOrEmpty(sheetName))
                         continue;
 
-                    // Binayı bul
                     var building = await _buildingRepository.GetByNameAsync(sheetName);
                     if (building == null)
                     {
@@ -80,14 +79,12 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Papers.Commands.AddPape
                     foreach (OpenXmlRow row in sheetData.Elements<OpenXmlRow>())
                     {
                         rowIndex++;
-                        // Skip header row
                         if (rowIndex == 1) continue;
 
                         try
                         {
                             var cells = row.Elements<OpenXmlCell>().ToList();
 
-                            // Boş satırları atla
                             if (cells.Count < 2)
                             {
                                 bool isEmpty = true;
@@ -111,7 +108,6 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Papers.Commands.AddPape
                             var dateValue = GetCellValue(document, cells[0]);
                             var usageValue = GetCellValue(document, cells[1]);
 
-                            // Tüm değerler boşsa bu satırı atla
                             if (string.IsNullOrWhiteSpace(dateValue) &&
                                 string.IsNullOrWhiteSpace(usageValue))
                             {
@@ -125,8 +121,17 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Papers.Commands.AddPape
                                 continue;
                             }
 
+                            var date = ParseDate(dateValue);
+                            
+                            var existsForMonth = await _paperRepository.ExistsForMonthAsync(building.Id, date.Year, date.Month);
+                            if (existsForMonth)
+                            {
+                                response.Errors.Add($"Sheet '{sheetName}', Row {rowIndex}: Bu bina için {date:yyyy/MM} tarihinde kağıt verisi zaten mevcut. Aynı ay için birden fazla veri girilemez.");
+                                continue;
+                            }
+
                             var paper = Paper.Create(
-                                ParseDate(dateValue),
+                                date,
                                 decimal.Parse(usageValue),
                                 building.Id);
 
@@ -172,7 +177,6 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Papers.Commands.AddPape
 
         private DateTime ParseDate(string dateValue)
         {
-            // Excel'deki tarih formatını kontrol et
             if (double.TryParse(dateValue, out double doubleValue))
             {
                 try
@@ -182,7 +186,6 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Papers.Commands.AddPape
                 catch { }
             }
 
-            // Çeşitli tarih formatlarını dene
             string[] formats = {
                 "MM/dd/yyyy",
                 "M/d/yyyy",

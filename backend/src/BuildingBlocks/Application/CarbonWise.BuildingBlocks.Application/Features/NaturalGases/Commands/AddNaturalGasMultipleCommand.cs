@@ -1,5 +1,4 @@
-﻿// backend/src/BuildingBlocks/Application/CarbonWise.BuildingBlocks.Application/Features/NaturalGases/Commands/AddNaturalGasMultiple.cs
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -128,8 +127,17 @@ namespace CarbonWise.BuildingBlocks.Application.Features.NaturalGases.Commands.A
                                 continue;
                             }
 
+                            var date = ParseDate(dateValue);
+                            
+                            var existsForMonth = await _naturalGasRepository.ExistsForMonthAsync(building.Id, date.Year, date.Month);
+                            if (existsForMonth)
+                            {
+                                response.Errors.Add($"Sheet '{sheetName}', Row {rowIndex}: Bu bina için {date:yyyy/MM} tarihinde doğalgaz verisi zaten mevcut. Aynı ay için birden fazla veri girilemez.");
+                                continue;
+                            }
+
                             var naturalGas = NaturalGas.Create(
-                                ParseDate(dateValue),
+                                date,
                                 decimal.Parse(initialValue),
                                 decimal.Parse(finalValue),
                                 decimal.Parse(sm3Value),

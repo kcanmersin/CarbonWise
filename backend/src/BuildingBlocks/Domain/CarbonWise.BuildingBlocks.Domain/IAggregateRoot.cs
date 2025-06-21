@@ -56,7 +56,6 @@ namespace CarbonWise.BuildingBlocks.Domain
 
 namespace CarbonWise.BuildingBlocks.Domain
 {
-    // See: https://enterprisecraftsmanship.com/posts/value-object-better-implementation/
     public abstract class ValueObject : IEquatable<ValueObject>
     {
         public bool Equals(ValueObject other)

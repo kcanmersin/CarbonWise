@@ -17,5 +17,6 @@ namespace CarbonWise.BuildingBlocks.Domain.Waters
         Task DeleteAsync(WaterId id);
         Task<List<WaterMonthlyTotalDto>> GetMonthlyTotalsAsync(DateTime? startDate = null, DateTime? endDate = null);
         Task<List<WaterMonthlyAggregateDto>> GetMonthlyAggregateAsync(DateTime? startDate = null, DateTime? endDate = null);
+        Task<bool> ExistsForMonthAsync(BuildingId buildingId, int year, int month);
     }
 }

@@ -28,10 +28,9 @@ namespace CarbonWise.BuildingBlocks.Application.Services.AI
                 PropertyNameCaseInsensitive = true
             };
 
-            // Configure HttpClient
             _httpClient.BaseAddress = new Uri(_fastApiBaseUrl);
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
-            _httpClient.Timeout = TimeSpan.FromMinutes(10); // Long timeout for training
+            _httpClient.Timeout = TimeSpan.FromMinutes(10);
         }
 
         public async Task<AITrainResponse> TrainModelAsync(AITrainRequest request)

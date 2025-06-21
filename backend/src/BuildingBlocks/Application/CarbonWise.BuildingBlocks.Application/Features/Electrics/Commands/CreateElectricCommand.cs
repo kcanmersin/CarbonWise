@@ -39,6 +39,13 @@ namespace CarbonWise.BuildingBlocks.Application.Features.Electrics.Commands.Crea
                 throw new ApplicationException("Building not found");
             }
 
+            var buildingId = new BuildingId(request.BuildingId);
+            var existsForMonth = await _electricRepository.ExistsForMonthAsync(buildingId, request.Date.Year, request.Date.Month);
+            if (existsForMonth)
+            {
+                throw new ApplicationException($"Bu bina için {request.Date:yyyy/MM} tarihinde elektrik verisi zaten mevcut. Aynı ay için birden fazla veri girilemez.");
+            }
+
             var electric = Electric.Create(
                 request.Date,
                 request.InitialMeterValue,

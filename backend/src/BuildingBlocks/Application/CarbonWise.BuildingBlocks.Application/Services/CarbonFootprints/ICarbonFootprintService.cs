@@ -1,4 +1,5 @@
-﻿using CarbonWise.BuildingBlocks.Domain.CarbonFootprints;
+﻿using CarbonWise.BuildingBlocks.Application.Services.CarbonFootprints;
+using CarbonWise.BuildingBlocks.Domain.CarbonFootprints;
 
 public interface ICarbonFootprintService
 {
@@ -12,6 +13,12 @@ public interface ICarbonFootprintService
     Task<List<CarbonFootprint>> CalculateForPeriodAsync(
         DateTime startDate,
         DateTime endDate,
+        decimal? electricityFactor = null,
+        decimal? shuttleBusFactor = null,
+        decimal? carFactor = null,
+        decimal? motorcycleFactor = null);
+
+    Task<CarbonFootprintComparisonDto> GetYearComparisonAsync(
         decimal? electricityFactor = null,
         decimal? shuttleBusFactor = null,
         decimal? carFactor = null,

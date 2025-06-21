@@ -192,10 +192,8 @@ namespace CarbonWise.API.Services
             using var sha256 = SHA256.Create();
             var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(codeVerifier));
             
-            // Use standard Base64 encoding (not Base64URL)
             var base64String = Convert.ToBase64String(hashBytes);
             
-            // Apply percent encoding as required by GTÜ documentation
             var percentEncoded = Uri.EscapeDataString(base64String);
             
             return percentEncoded;
