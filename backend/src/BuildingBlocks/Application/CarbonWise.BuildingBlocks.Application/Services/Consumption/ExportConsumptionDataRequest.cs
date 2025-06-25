@@ -14,5 +14,7 @@ namespace CarbonWise.API.Models.Consumption
         public DateTime? EndDate { get; set; }
 
         public bool IncludeGraphs { get; set; } = false;
+
+        public Guid? BuildingId { get; set; }
     }
 }

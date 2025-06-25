@@ -17,6 +17,7 @@ namespace CarbonWise.BuildingBlocks.Application.Services.Consumption
             string consumptionType,
             DateTime? startDate = null,
             DateTime? endDate = null,
-            bool includeGraphs = false);
+            bool includeGraphs = false,
+            Guid? buildingId = null);
     }
 }

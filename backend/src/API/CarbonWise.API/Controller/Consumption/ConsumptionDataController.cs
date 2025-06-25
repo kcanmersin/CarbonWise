@@ -47,9 +47,11 @@ namespace CarbonWise.API.Controllers
                     request.ConsumptionType,
                     request.StartDate,
                     request.EndDate,
-                    request.IncludeGraphs);
+                    request.IncludeGraphs,
+                    request.BuildingId);
 
-                var fileName = $"{request.ConsumptionType}_ConsumptionData_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+                var buildingInfo = request.BuildingId.HasValue ? $"_Building_{request.BuildingId}" : "";
+                var fileName = $"{request.ConsumptionType}_ConsumptionData{buildingInfo}_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
 
                 return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
