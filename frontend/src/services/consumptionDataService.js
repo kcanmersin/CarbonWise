@@ -1,6 +1,6 @@
 const API_URL = "http://localhost:5067/api"; // Adjust to match your backend base URL
 
-export const exportConsumptionData = async (consumptionType, startDate, endDate, includeGraphs = true) => {
+export const exportConsumptionData = async (consumptionType, startDate, endDate, includeGraphs, buildingID = true) => {
   try {
     // Format the query parameters
     const params = new URLSearchParams({
@@ -9,6 +9,10 @@ export const exportConsumptionData = async (consumptionType, startDate, endDate,
       endDate,
       includeGraphs
     });
+
+    if (buildingID) {
+      params.append("buildingID", buildingID);
+    }
 
     // Make a GET request to the export endpoint
     const response = await fetch(`${API_URL}/ConsumptionData/export?${params}`, {
