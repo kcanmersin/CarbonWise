@@ -511,9 +511,28 @@ Keep your recommendations concise (maximum 300 words), practical and tailored sp
                                         dataColumn.Item().PaddingTop(5).Text("Natural Gas consumption data format not recognized.");
                                     }
                                 }
-                                else if (report.ConsumptionType == "Water" || report.ConsumptionType == "Paper")
+                                else if (report.ConsumptionType == "Water")
                                 {
-                                    if (report.Data is IEnumerable<ConsumptionDataDto> consumptionData)
+                                    if (report.Data is List<Domain.Waters.WaterMonthlyTotalDto> monthlyTotals)
+                                    {
+                                        AddWaterMonthlyTotalsSummary(dataColumn, monthlyTotals);
+                                    }
+                                    else if (report.Data is IEnumerable<ConsumptionDataDto> consumptionData)
+                                    {
+                                        AddGenericConsumptionSummary(dataColumn, consumptionData.ToList(), report.ConsumptionType, report.BuildingName);
+                                    }
+                                    else
+                                    {
+                                        dataColumn.Item().PaddingTop(5).Text($"Summary data for {report.ConsumptionType} is not in the expected format.");
+                                    }
+                                }
+                                else if (report.ConsumptionType == "Paper")
+                                {
+                                    if (report.Data is List<Domain.Papers.PaperMonthlyTotalDto> monthlyTotals)
+                                    {
+                                        AddPaperMonthlyTotalsSummary(dataColumn, monthlyTotals);
+                                    }
+                                    else if (report.Data is IEnumerable<ConsumptionDataDto> consumptionData)
                                     {
                                         AddGenericConsumptionSummary(dataColumn, consumptionData.ToList(), report.ConsumptionType, report.BuildingName);
                                     }
@@ -813,6 +832,120 @@ Keep your recommendations concise (maximum 300 words), practical and tailored sp
                         table.Cell().Text($"{yearData.Sum(d => d.KWHValue ?? 0):N2}");
                         table.Cell().Text($"{yearData.Sum(d => d.Usage):N2}");
                         table.Cell().Text(yearData.Count.ToString());
+                    }
+                });
+            }
+        }
+
+        private void AddWaterMonthlyTotalsSummary(ColumnDescriptor column, List<Domain.Waters.WaterMonthlyTotalDto> monthlyTotals)
+        {
+            column.Item().PaddingTop(5).Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.ConstantColumn(100);
+                    columns.ConstantColumn(120);
+                });
+
+                table.Header(header =>
+                {
+                    header.Cell().Background(Colors.Grey.Lighten2).Text("Month").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten2).Text("Total Usage").Bold();
+                });
+
+                foreach (var total in monthlyTotals.OrderBy(t => t.Year).ThenBy(t => t.Month))
+                {
+                    table.Cell().Text(total.FormattedMonth);
+                    table.Cell().Text($"{total.TotalUsage:N2}");
+                }
+
+                table.Cell().Background(Colors.Grey.Lighten3).Text("TOTAL").Bold();
+                table.Cell().Background(Colors.Grey.Lighten3).Text($"{monthlyTotals.Sum(t => t.TotalUsage):N2}").Bold();
+            });
+
+            var years = monthlyTotals.Select(t => t.Year).Distinct().ToList();
+            if (years.Count > 1)
+            {
+                column.Item().PaddingTop(20).Text("Yearly Summary")
+                    .FontSize(12)
+                    .Bold();
+
+                column.Item().PaddingTop(5).Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.ConstantColumn(100);
+                        columns.ConstantColumn(120);
+                    });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().Background(Colors.Grey.Lighten2).Text("Year").Bold();
+                        header.Cell().Background(Colors.Grey.Lighten2).Text("Total Usage").Bold();
+                    });
+
+                    foreach (var year in years.OrderBy(y => y))
+                    {
+                        var yearData = monthlyTotals.Where(t => t.Year == year).ToList();
+                        table.Cell().Text(year.ToString());
+                        table.Cell().Text($"{yearData.Sum(t => t.TotalUsage):N2}");
+                    }
+                });
+            }
+        }
+
+        private void AddPaperMonthlyTotalsSummary(ColumnDescriptor column, List<Domain.Papers.PaperMonthlyTotalDto> monthlyTotals)
+        {
+            column.Item().PaddingTop(5).Table(table =>
+            {
+                table.ColumnsDefinition(columns =>
+                {
+                    columns.ConstantColumn(100);
+                    columns.ConstantColumn(120);
+                });
+
+                table.Header(header =>
+                {
+                    header.Cell().Background(Colors.Grey.Lighten2).Text("Month").Bold();
+                    header.Cell().Background(Colors.Grey.Lighten2).Text("Total Usage").Bold();
+                });
+
+                foreach (var total in monthlyTotals.OrderBy(t => t.Year).ThenBy(t => t.Month))
+                {
+                    table.Cell().Text(total.FormattedMonth);
+                    table.Cell().Text($"{total.TotalUsage:N2}");
+                }
+
+                table.Cell().Background(Colors.Grey.Lighten3).Text("TOTAL").Bold();
+                table.Cell().Background(Colors.Grey.Lighten3).Text($"{monthlyTotals.Sum(t => t.TotalUsage):N2}").Bold();
+            });
+
+            var years = monthlyTotals.Select(t => t.Year).Distinct().ToList();
+            if (years.Count > 1)
+            {
+                column.Item().PaddingTop(20).Text("Yearly Summary")
+                    .FontSize(12)
+                    .Bold();
+
+                column.Item().PaddingTop(5).Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.ConstantColumn(100);
+                        columns.ConstantColumn(120);
+                    });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().Background(Colors.Grey.Lighten2).Text("Year").Bold();
+                        header.Cell().Background(Colors.Grey.Lighten2).Text("Total Usage").Bold();
+                    });
+
+                    foreach (var year in years.OrderBy(y => y))
+                    {
+                        var yearData = monthlyTotals.Where(t => t.Year == year).ToList();
+                        table.Cell().Text(year.ToString());
+                        table.Cell().Text($"{yearData.Sum(t => t.TotalUsage):N2}");
                     }
                 });
             }
